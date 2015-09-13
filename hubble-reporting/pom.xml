@@ -6,14 +6,14 @@
 	</prerequisites>
 
     <parent>
-		<groupId>team.supernova.palantir</groupId>
-		<artifactId>palantir</artifactId>
+		<groupId>team.supernova.hubble</groupId>
+		<artifactId>hubble</artifactId>
 		<version>1.0-SNAPSHOT</version>
     </parent>
 
-	<artifactId>palantir-reporting</artifactId>
+	<artifactId>hubble-reporting</artifactId>
 	<version>1.0-SNAPSHOT</version>
-	<name>Reporting module for Palantir</name>
+	<name>Reporting module for Hubble</name>
 	<packaging>jar</packaging>
 
 	<dependencies>

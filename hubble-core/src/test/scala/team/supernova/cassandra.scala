@@ -11,11 +11,11 @@ trait TestCassandraCluster  {
 
   val props: Properties = new Properties
   props.load(this.getClass.getClassLoader.getResourceAsStream("test.properties"))
-  val username = props.getProperty("palantir.cassandra.username")
-  val password = props.getProperty("palantir.cassandra.password")
-  val port = props.getProperty("palantir.cassandra.port").toInt
-  val keyspace = props.getProperty("palantir.cassandra.keyspace")
-  val hosts = props.getProperty("palantir.cassandra.hosts").split(",").toList
+  val username = props.getProperty("hubble.cassandra.username")
+  val password = props.getProperty("hubble.cassandra.password")
+  val port = props.getProperty("hubble.cassandra.port").toInt
+  val keyspace = props.getProperty("hubble.cassandra.keyspace")
+  val hosts = props.getProperty("hubble.cassandra.hosts").split(",").toList
 
   lazy val session: Session =
     Cluster.builder().

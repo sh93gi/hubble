@@ -4,36 +4,36 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>team.supernova.palantir</groupId>
-    <artifactId>palantir</artifactId>
+    <groupId>team.supernova.hubble</groupId>
+    <artifactId>hubble</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <scm>
-        <connection>scm:git:https://github.com/Supernova-Team/palantir.git</connection>
-        <developerConnection>scm:git:https://github.com/Supernova-Team/palantir.git</developerConnection>
+        <connection>scm:git:https://github.com/Supernova-Team/hubble.git</connection>
+        <developerConnection>scm:git:https://github.com/Supernova-Team/hubble.git</developerConnection>
     </scm>
 
 
-    <!-- TODO Get config in main pom file -->
-    <profiles>
-        <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <!-- Confluence credentials -->
-                <confluence.user>username</confluence.user>
-                <confluence.password>password</confluence.password>
-            </properties>
-        </profile>
-    </profiles>
+    <!--Main ain pom file &ndash;&gt;-->
+    <!--<profiles>-->
+        <!--<profile>-->
+            <!--<id>default</id>-->
+            <!--<activation>-->
+                <!--<activeByDefault>true</activeByDefault>-->
+            <!--</activation>-->
+            <!--<properties>-->
+                <!--&lt;!&ndash; Confluence credentials &ndash;&gt;-->
+                <!--<confluence.user>username</confluence.user>-->
+                <!--<confluence.password>password</confluence.password>-->
+            <!--</properties>-->
+        <!--</profile>-->
+    <!--</profiles>-->
 
 
     <modules>
-        <module>palantir-core</module>
-        <module>palantir-reporting</module>
+        <module>hubble-core</module>
+        <module>hubble-reporting</module>
     </modules>
 
     <build>
