@@ -1,11 +1,18 @@
 ## Hubble
-Hubble is a Cassandra Shared Cluster Dashboard
+Hubble is a 'telescope' into a group of cassandra clusters to help make life easier and reducing the need to log on to the cluster thus improving security even further.   
+
+
+
+## Architecture:
 
 ![alt text](https://github.com/Supernova-Team/hubble/blob/master/doc/hubble.jpg)
 
 
-Still TODO:
-Make standalone jar (instead of test case to generate pages)
+## Getting Started
+
+- Add maven parameters
+- Add example insert statement
+- Add table definition
 
 
 
@@ -13,14 +20,16 @@ Make standalone jar (instead of test case to generate pages)
 
 ## Confluence 
 
+If you don't have [Confluence](https://www.atlassian.com/software/confluence) already installed or want to setup a local development environment then we recommend using docker and setup a [Confluence container](https://hub.docker.com/r/cptactionhank/atlassian-confluence/). 
 
-If you don't have Confluence already installed somewhere or want to setup a local development environment then we recommend using docker:
-[Confluence container](https://hub.docker.com/r/cptactionhank/atlassian-confluence/)  docker run --detach --name conf --publish 8090:8090 cptactionhank/atlassian-confluence:5.8.5 
+Please enable the following features in confluence otherwise the generated pages won't work: 
+
+- [remote APIs](https://confluence.atlassian.com/display/DOC/Enabling+the+Remote+API)
+- [HTML macros](https://confluence.atlassian.com/display/DOC/HTML+Macro) 
 
 
-Please enable the following features in confluence: 
-
-[remote APIs](https://confluence.atlassian.com/display/DOC/Enabling+the+Remote+API)
-[HTML macros](https://confluence.atlassian.com/display/DOC/HTML+Macro) 
-
+## Still TODO:
+- Add configuration to get started.
+- Make standalone jar (instead of test case to generate pages)
+- Add list after presenting at Cassandra Summit 2015 :-)
 
