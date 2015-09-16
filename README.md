@@ -1,7 +1,7 @@
 ## Hubble
 Hubble is a Cassandra Shared Cluster Dashboard
 
-(https://github.com/Supernova-Team/hubble/blob/master/doc/hubble.jpg)
+![alt text](https://github.com/Supernova-Team/hubble/blob/master/doc/hubble.jpg)
 
 
 Still TODO:
