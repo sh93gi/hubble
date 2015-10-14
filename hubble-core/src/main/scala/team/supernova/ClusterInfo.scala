@@ -225,9 +225,6 @@ case class GroupClusters(clusterInfoList: SortedSet[ClusterInfo]) {
   }
 }
 
-
-
-
 //TODO most of this can be removed due to Actor setup :-)
 object ClusterInfo {
 

@@ -2,18 +2,12 @@ package team.supernova
 
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.testkit._
-import org.json4s.jackson.JsonMethods._
 
 import org.scalatest._
-import team.supernova.actor.Controller
-import team.supernova.actor.Controller.{GetClusterGroup, Done}
+import team.supernova.actor.{ConfluencePage, ClusterInfoController}
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
 import team.supernova.confluence.{GenerateCassandraConfluencePages, ConfluenceToken}
-import team.supernova.domain.Login
-
-import scalaj.http.Http
-
 
 /**
  * Created by Gary Stewart on 4-8-2015.
@@ -27,9 +21,9 @@ with TestCassandraCluster {
  val TEST_PROPERTIES="test.properties"
   //val TEST_PROPERTIES="local.properties"
   val GROUP="LLDS_1"
-  val SPACE="KAAS"
+  //val SPACE="KAAS"
   val TOKEN = ConfluenceToken.getConfluenceToken(TEST_PROPERTIES)
-  //val SPACE="~npa_minions"
+  val SPACE="~npa_minions"
 
 
 //  it  ("Pretty Print ClusterInfo") {
@@ -40,10 +34,10 @@ with TestCassandraCluster {
 //  }
 
   //Generate the confluence pages
-  it  ("Generate Confluence - Sequenctially") {
-    val allClusters = ClusterInfo.createClusterInfo(session, GROUP)
-    GenerateCassandraConfluencePages.generateAllConfluencePages (allClusters, SPACE ,GROUP, TOKEN, false)
-  }
+//  it  ("Generate Confluence - Sequenctially") {
+//    val allClusters = ClusterInfo.createClusterInfo(session, GROUP)
+//    GenerateCassandraConfluencePages.generateAllConfluencePages (allClusters, SPACE ,GROUP, TOKEN, false)
+//  }
 
 
   it  ("Confluence Test Read Page") {
@@ -57,25 +51,25 @@ with TestCassandraCluster {
   }
 
   // intellij reports an incorrect error here due to 'seconds'
-  it("AKKA - generate Confluence pages") {
-    case object Finished
-    val controller = system.actorOf(Props[Controller])
-
-    val actorRef = TestActorRef(new Actor {
-      def receive = {
-        case done: Done => {
-          println ("DONE!!!")
-          GenerateCassandraConfluencePages.generateAllConfluencePages (done.allClusters, SPACE, GROUP, TOKEN, false )
-          //reply to testActor to keep test running until finished!!!
-          testActor ! Finished
-        }
-      }
-    })
-    controller ! GetClusterGroup (actorRef, GROUP, session)
-    import scala.concurrent.duration._
-    expectMsg(600 seconds,Finished)
-    //TODO shutdown system
-  }
+  //it("AKKA - generate Confluence pages") {
+  //  case object Finished
+  //  val controller = system.actorOf(Props[ClusterInfoController])
+  //
+  //  val actorRef = TestActorRef(new Actor {
+  //    def receive = {
+  //      case clusterInfo: ConfluencePage.GenerateAll => {
+  //        println ("DONE!!!")
+  //        GenerateCassandraConfluencePages.generateAllConfluencePages (clusterInfo.allClusters, SPACE, GROUP, TOKEN, false )
+  //        //reply to testActor to keep test running until finished!!!
+  //        testActor ! Finished
+  //      }
+  //    }
+  //  })
+  //  controller ! All (actorRef, GROUP, session)
+  //  import scala.concurrent.duration._
+  //  expectMsg(600 seconds,Finished)
+  //  //TODO shutdown system
+  //}
 
 
 
