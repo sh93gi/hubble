@@ -50,3 +50,4 @@ tmp/
 build/
 akka-patterns-store/
 hubble-core/src/main/resources/DONT_ADD/
+hubble-core/export.xlsx
