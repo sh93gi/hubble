@@ -1,0 +1,14 @@
+hubble {
+  cassandra {
+    username = governance_owner
+    password = "n]1^;mFpog@l"
+    keyspace = governance
+    hosts = lrv1433h.europe.intranet
+    port = 9042
+  }
+  confluence {
+    user = npa_minions
+    password = hVC2j2FW
+    endpointaddress = "https://confluence.europe.intranet/plugins/servlet/soap-axis1/confluenceservice-v2"
+  }
+}
