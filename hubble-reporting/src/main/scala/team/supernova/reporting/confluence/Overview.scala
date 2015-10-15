@@ -19,7 +19,8 @@ case class KeyspaceInfo (keyspace       : String,
                          dcabGroup      : String,
                          dcabApprover   : List[String],
                          devContacts    : List[String],
-                         opsContacts    : List[String])
+                         opsContacts    : List[String],
+                         productOwner   : List[String])
 
 
 
@@ -104,6 +105,7 @@ case class KeyspaceInfo (keyspace       : String,
     var dcabApprover = List[String]()
     var devContacts = List[String]()
     var opsContacts = List[String]()
+    var productOwner = List[String]()
 
     //if (kPage.getTitle == "api_directory") {
     if (linkedKeyspace =="") {
@@ -113,11 +115,12 @@ case class KeyspaceInfo (keyspace       : String,
       dcabApprover = getUsersFromValue(token, content, "DCAB Approver")
       devContacts = getUsersFromValue(token, content, "Dev contacts(s)")
       opsContacts = getUsersFromValue(token, content, "Ops contact(s)")
+      productOwner = getUsersFromValue(token, content, "Product Owner")
     }
     else {
       println(keyspaceName +" -> "+ linkedKeyspace)
     }
-    var keyspaceInfo = new KeyspaceInfo(keyspaceName, "",linkedKeyspace,dcab, dcabApprover, devContacts, opsContacts )
+    var keyspaceInfo = new KeyspaceInfo(keyspaceName, "",linkedKeyspace,dcab, dcabApprover, devContacts, opsContacts, productOwner )
     keyspaceInfo
 
   }

@@ -17,7 +17,7 @@ object Excel {
 
     val headerStyle =  CellStyle(fillPattern = CellFill.Solid, fillForegroundColor = Color.AquaMarine, fillBackgroundColor = Color.AquaMarine, font = Font(bold = true))
 
-    val rows = Row(style = headerStyle).withCellValues("Keyspace", "Cluster Name", "linkedCluster", "dcabGroup","dcabApprover","devContacts", "opsContacts" ) +:
+    val rows = Row(style = headerStyle).withCellValues("Keyspace", "Cluster Name", "linkedCluster", "dcabGroup","dcabApprover","devContacts", "opsContacts","productOwner" ) +:
       keyspaceInfoList.map(k => Row().withCellValues(
         k.keyspace,
         Option(k.clusterName).getOrElse(""),
@@ -25,7 +25,8 @@ object Excel {
         Option(k.dcabGroup).getOrElse(""),
         Option(k.dcabApprover.foldLeft(""){(a,b) => b + "\n" + a } ).getOrElse(""),
         Option(k.devContacts.foldLeft(""){(a,b) => b + "\n" + a } ).getOrElse(""),
-        Option(k.opsContacts.foldLeft(""){(a,b) => b + "\n" + a } ).getOrElse("")
+        Option(k.opsContacts.foldLeft(""){(a,b) => b + "\n" + a } ).getOrElse(""),
+        Option(k.productOwner.foldLeft(""){(a,b) => b + "\n" + a } ).getOrElse("")
       )).toArray
 
     val exportSheet = Sheet(name = "KeyspaceInfo")
