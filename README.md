@@ -11,7 +11,7 @@ Hubble is a 'telescope' into a group of cassandra clusters to help make life eas
 ## Getting Started
 
 - Add maven parameters
-''''XML
+```XML
 <confluence.user>the user used for connecting to Confluence</confluence.user>
 <confluence.password>the password used for connecting to Confluence</confluence.password>
 <confluence.endpointaddress>the url of the Confluence SOAP endpoint</confluence.endpointaddress>
@@ -23,7 +23,7 @@ Hubble is a 'telescope' into a group of cassandra clusters to help make life eas
 <hubble.cassandra.keyspace>the keyspace which you want to connect to</hubble.cassandra.keyspace>
 <hubble.cassandra.host>hosts list (comma separated) for connecting to Cassandra</hubble.cassandra.host>
 <hubble.cassandra.port>port used to connect to Cassandra (e.g. 9042)</hubble.cassandra.port>
-''''
+```
 - Add example insert statement
 - Add table definition
 
