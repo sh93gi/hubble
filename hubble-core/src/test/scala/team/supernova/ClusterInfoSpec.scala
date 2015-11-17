@@ -18,16 +18,15 @@ class ClusterInfoSpec  extends TestKit(ActorSystem("ClusterInfoSpec"))
 with FunSpecLike //with Matchers with BeforeAndAfterAll
 with TestCassandraCluster {
 
- val TEST_PROPERTIES="test.properties"
+  val TEST_PROPERTIES="test.properties"
   //val TEST_PROPERTIES="local.properties"
-  val GROUP="LLDS_1"
-  //val SPACE="KAAS"
   val TOKEN = ConfluenceToken.getConfluenceToken(TEST_PROPERTIES)
-  val SPACE="~npa_minions"
+  val GROUP= props.getProperty("confluence.group")
+  val SPACE= props.getProperty("confluence.space")
 
 
 //  it  ("Pretty Print ClusterInfo") {
-//   // val cluster = ClusterInfo.createClusterInfo(session, "LLDS_1")
+//   // val cluster = ClusterInfo.createClusterInfo(session, GROUP)
 //    //TODO fix me
 //  //  PrettyPrint.prettyPrintKeyspace(cluster,"key2")
 //   // assert (true)

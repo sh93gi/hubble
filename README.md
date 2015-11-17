@@ -11,6 +11,18 @@ Hubble is a 'telescope' into a group of cassandra clusters to help make life eas
 ## Getting Started
 
 - Add maven parameters
+    #Confluence
+    confluence.user= the user used for connecting to Confluence
+    confluence.password= the password used for connecting to Confluence
+    confluence.endpointaddress= the url of the Confluence SOAP endpoint
+    confluence.space= the Confluence space where you want to write the pages to
+    confluence.group= the page group on the space you want to write to
+    #Cassandra
+    hubble.cassandra.username= the user to connect to Cassandra
+    hubble.cassandra.password= the password to connect to Cassandra
+    hubble.cassandra.keyspace= the keyspace which you want to connect to
+    hubble.cassandra.hosts= hosts list (comma separated) for connecting to Cassandra
+    hubble.cassandra.port= port used to connect to Cassandra (e.g. 9042)
 - Add example insert statement
 - Add table definition
 

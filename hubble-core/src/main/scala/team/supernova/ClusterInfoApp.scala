@@ -8,10 +8,6 @@ import scala.concurrent.duration._
 
 object ClusterInfoApp extends App {
 
-  val GROUP="LLDS_1"
-  //val SPACE="KAAS"
-  val SPACE="~npa_minions"
-
   val system = ActorSystem("ClusterInfo")
   val TOKEN = ConfluenceToken.getConfluenceToken(system.settings.config)
 
@@ -19,6 +15,8 @@ object ClusterInfoApp extends App {
 
   def startScheduleEveryDay() = {
     import system.dispatcher
+    val GROUP = system.settings.config.getString("confluence.group")
+    val SPACE = system.settings.config.getString("confluence.space")
     val app = system.actorOf(ClusterInfoCollector.props(SPACE, GROUP, TOKEN))
     system.scheduler.schedule(0 milliseconds, 24 hours, app, ClusterInfoCollector.Start(GROUP, cassandraSession))
   }
