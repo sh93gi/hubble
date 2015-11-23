@@ -87,15 +87,16 @@ case class KeyspaceInfo (keyspace       : String,
     (content \\ "link" \\ "page" \ "@{http://ri}content-title" filter(a => a.text !=  "Patterns - Use Cases" )).text  //map(a => println(kPage.getTitle +" -> "+a.text))
   }
 
-  def getKeyspaceInfo(token: Token, keyspaceName: String): KeyspaceInfo = {
+  def getKeyspaceInfo(token: Token, keyspaceName: String, space: String): KeyspaceInfo = {
     val p: Page = new Page
-    val childPage = p.read("kaas",keyspaceName)
+    val childPage = p.read(space,keyspaceName)
 
+    //print("+++++++++++++++++++++++++++++++++++++++++++++++++ CHILDPAGE" + childPage.getContent.replaceAll("&","&amp;"));
     val content = scala.xml.XML.loadString("<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
       //need to removed nbsp and dashes from names
-      "<!DOCTYPE some_name [ \n<!ENTITY nbsp \"&#160;\">\n<!ENTITY ndash \"&#160;\"> \n]> " +
+      //"<!DOCTYPE some_name [ \n<!ENTITY ndash \"&#160;\"> \n]> " +
       // body specify namespace to so that it can be used to extract URIs
-      s"""<body xmlns:ri="http://ri">${childPage.getContent}</body>""")
+      s"""<body xmlns:ri="http://ri">${childPage.getContent.replaceAll("&","&amp;")}</body>""")
 
 
     //find linked page!!
@@ -126,23 +127,23 @@ case class KeyspaceInfo (keyspace       : String,
   }
 
 
-  def getKeyspacesInfoFromManualPage (token: Token): List[KeyspaceInfo] = {
+  def getKeyspacesInfoFromManualPage (token: Token, space: String): List[KeyspaceInfo] = {
     val pageName = "Keyspaces"
     val page: Page = new Page
-    val parentPage: RemotePage = page.read("kaas", pageName)
+    val parentPage: RemotePage = page.read(space, pageName)
 
     val keyspacePages =  token.getService.getChildren(token.getToken, parentPage.getId)
 
    var keyspaceInfoList : List[KeyspaceInfo] = List[KeyspaceInfo]()
     for(kPage <- keyspacePages)
       yield {
-        keyspaceInfoList = getKeyspaceInfo (token, kPage.getTitle) :: keyspaceInfoList
+        keyspaceInfoList = getKeyspaceInfo (token, kPage.getTitle, space) :: keyspaceInfoList
       }
     keyspaceInfoList
   }
 
 
-  def generateList (token: Token) : Unit = {
+  def generateList (token: Token, space: String) : Unit = {
 
     //find all keyspaces
     val keyspaceInfoList = getKeyspaces (token)
@@ -152,7 +153,7 @@ case class KeyspaceInfo (keyspace       : String,
     println (keyspaceClusterList)
     println (clusterKeyspaceList)
 
-    getKeyspacesInfoFromManualPage(token)
+    getKeyspacesInfoFromManualPage(token, space)
     println("---- FINISHED ---")
   }
 }
