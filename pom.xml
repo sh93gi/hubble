@@ -79,7 +79,6 @@
                 <filtering>true</filtering>
                 <includes>
                     <include>**/*.properties</include>
-                    <include>**/*.conf</include>
                 </includes>
             </testResource>
         </testResources>
