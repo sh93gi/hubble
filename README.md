@@ -28,15 +28,16 @@ Hubble is a 'telescope' into a group of cassandra clusters to help make life eas
 - Add table definition
 
 ## Packaging and running the application
-Run ```
+Run 
+```
  mvn clean install 
-
+```
 This will create a package for you at Hubble-core component
 The generated jar file intentionally leaves out application.conf. This will help if you have different configuration for different environment.
 You can run the jar by providing application.conf from outside. example:
 ```
 java -Dconfig.file='{some-location}/application.conf' -jar hubble-core-1.0-SNAPSHOT-jar-with-dependencies.jar
-
+```
 
 
 
