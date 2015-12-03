@@ -15,8 +15,8 @@ object ClusterInfoApp extends App {
 
   def startScheduleEveryDay() = {
     import system.dispatcher
-    val GROUP = system.settings.config.getString("confluence.group")
-    val SPACE = system.settings.config.getString("confluence.space")
+    val GROUP = system.settings.config.getString("hubble.confluence.group")
+    val SPACE = system.settings.config.getString("hubble.confluence.space")
     val app = system.actorOf(ClusterInfoCollector.props(SPACE, GROUP, TOKEN))
     system.scheduler.schedule(0 milliseconds, 24 hours, app, ClusterInfoCollector.Start(GROUP, cassandraSession))
   }
