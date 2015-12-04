@@ -18,11 +18,9 @@ class ClusterInfoSpec  extends TestKit(ActorSystem("ClusterInfoSpec"))
 with FunSpecLike //with Matchers with BeforeAndAfterAll
 with TestCassandraCluster {
 
-  val TEST_PROPERTIES="test.properties"
-  //val TEST_PROPERTIES="local.properties"
-  val TOKEN = ConfluenceToken.getConfluenceToken(TEST_PROPERTIES)
-  val GROUP= props.getProperty("confluence.group")
-  val SPACE= props.getProperty("confluence.space")
+  val TOKEN = ConfluenceToken.getConfluenceToken(system.settings.config)
+  val GROUP = system.settings.config.getString("hubble.confluence.group")
+  val SPACE = system.settings.config.getString("hubble.confluence.space")
 
 
 //  it  ("Pretty Print ClusterInfo") {
@@ -40,7 +38,7 @@ with TestCassandraCluster {
 
 
   it  ("Confluence Test Read Page") {
-    val token: Token = ConfluenceToken.getConfluenceToken (TEST_PROPERTIES)
+    val token: Token = ConfluenceToken.getConfluenceToken (system.settings.config)
     val pageName = "SN-GRID-PRD"
     //val pageName = "<Keyspace Name>"
 

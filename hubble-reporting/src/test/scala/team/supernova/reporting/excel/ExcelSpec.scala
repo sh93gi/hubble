@@ -2,9 +2,9 @@ package team.supernova.reporting.excel
 
 import java.util.Properties
 
+import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import team.supernova.reporting.confluence.{ConfluenceToken, Overview}
-
 /**
  * Created by Gary Stewart on 4-8-2015.
  *
@@ -12,12 +12,10 @@ import team.supernova.reporting.confluence.{ConfluenceToken, Overview}
 
 class ExcelSpec extends FunSpecLike {
 
-  val props: Properties = new Properties
-  props.load(this.getClass.getClassLoader.getResourceAsStream("test.properties"))
-  val space = props.getProperty("confluence.space")
-
+  val config = ConfigFactory.load()
+  val space = config.getString("hubble.confluence.space")
   it  ("Test Create excel sheet") {
-    Excel.createSheet (Overview.getKeyspacesInfoFromManualPage (ConfluenceToken.getConfluenceToken ("test.properties"), space ))
+    Excel.createSheet (Overview.getKeyspacesInfoFromManualPage (ConfluenceToken.getConfluenceToken (config), space ))
   }
 
 }

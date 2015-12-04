@@ -2,6 +2,7 @@ package team.supernova.reporting.confluence
 
 import java.util.Properties
 
+import com.typesafe.config.ConfigFactory
 import org.scalatest._
 
 /**
@@ -10,12 +11,11 @@ import org.scalatest._
  */
 class OverviewSpec extends FunSpecLike {
 
-  val props: Properties = new Properties
-  props.load(this.getClass.getClassLoader.getResourceAsStream("test.properties"))
-  val space = props.getProperty("confluence.space")
+  val config = ConfigFactory.load()
+  val space = config.getString("hubble.confluence.space")
 
    it  ("Confluence Test gen List") {
-     Overview.generateList (ConfluenceToken.getConfluenceToken ("test.properties"), space )
+     Overview.generateList (ConfluenceToken.getConfluenceToken (config), space )
    }
 
 }
