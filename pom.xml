@@ -129,7 +129,7 @@
         <dependency>
             <groupId>team.supernova.confluence</groupId>
             <artifactId>ConfluenceAPI</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
     </dependencies>
     <repositories>
