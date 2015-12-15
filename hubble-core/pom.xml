@@ -8,16 +8,13 @@
     <parent>
 		<groupId>team.supernova.hubble</groupId>
 		<artifactId>hubble</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>0.1-SNAPSHOT</version>
     </parent>
 
 	<artifactId>hubble-core</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>0.1-SNAPSHOT</version>
 	<name>Core module for Hubble</name>
 	<packaging>jar</packaging>
-
-
-
 
 	<dependencies>
 		<dependency>
