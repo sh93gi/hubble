@@ -54,3 +54,7 @@ hubble-core/export.xlsx
 hubble-reporting/export.xlsx
 
 **/application.conf
+hubble-core/pom.xml.releaseBackup
+hubble-reporting/pom.xml.releaseBackup
+pom.xml.releaseBackup
+release.properties
