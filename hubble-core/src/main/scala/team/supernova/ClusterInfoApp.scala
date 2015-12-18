@@ -3,6 +3,7 @@ package team.supernova
 import akka.actor.ActorSystem
 import com.datastax.driver.core.{Cluster, ProtocolOptions, Session}
 import com.typesafe.config.Config
+import team.supernova.actor.ClusterInfoCollector.Start
 import team.supernova.actor.{CassandraClusterGroup, ClusterEnv, ClusterInfoCollector}
 import team.supernova.confluence.ConfluenceToken
 
@@ -22,7 +23,7 @@ object ClusterInfoApp extends App {
 
     val clusters = mapConfigToCassandraClusterGroup(system.settings.config)
     val app = system.actorOf(ClusterInfoCollector.props(SPACE, TOKEN))
-    ClusterInfoCollector.Start(clusters)
+    app ! Start(clusters)
   }
 
   def mapConfigToClusterEnv(pr: Config): ClusterEnv = {
