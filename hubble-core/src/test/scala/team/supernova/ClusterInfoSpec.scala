@@ -19,7 +19,6 @@ with FunSpecLike //with Matchers with BeforeAndAfterAll
 with TestCassandraCluster {
 
   val TOKEN = ConfluenceToken.getConfluenceToken(system.settings.config)
-  val GROUP = system.settings.config.getString("hubble.confluence.group")
   val SPACE = system.settings.config.getString("hubble.confluence.space")
 
 
