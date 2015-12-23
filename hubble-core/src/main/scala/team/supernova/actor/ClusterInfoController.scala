@@ -12,11 +12,14 @@ import scala.collection.SortedSet
  *
  */
 object ClusterInfoController {
-  case class RetrieveAllClusterInfo(clusterGroup: String, session: Session)
-  case class AllClusterInfoRetrieved(allClusters: GroupClusters)
+  case class RetrieveAllClusterInfo(clusters: List[CassandraClusterGroup])
+  case class AllClusterInfoRetrieved(clusterInfoSet: SortedSet[ClusterInfo])
   def props(requester: ActorRef): Props = Props(new ClusterInfoController(requester))
 
 }
+
+case class CassandraClusterGroup(name: String, envs: List[ClusterEnv])
+case class ClusterEnv( cluster_name: String, graphana: String, graphite: String, hosts: Array[String], ops_pword: String, ops_uname: String, opscenter: String, port: Int, pword: String, uname: String, sequence: Int)
 
 class ClusterInfoController(requester: ActorRef) extends Actor with ActorLogging  {
 
@@ -24,39 +27,21 @@ class ClusterInfoController(requester: ActorRef) extends Actor with ActorLogging
   var clusterInfoList: SortedSet[ClusterInfo] = SortedSet.empty
   val worker = context.actorOf(RoundRobinPool(5).props(Props[ClusterInfoWorker]), "clientInfoWorker")
 
-  def processClusterInfoPerRow (row: Row, clusterGroup: String) = {
-    val cluster_name = row.getString("cluster_name")
-    val sequence = row.getInt("sequence")
-
-    //get OpsCenter details
-    val ops_uname = row.getString("ops_uname")
-    val ops_pword = row.getString("ops_pword")
-    val ops_hosts = row.getString("opscenter")
-
-    //cluster config
-    val uname = row.getString("uname")
-    val pword = row.getString("pword")
-    val hosts: List[String] = row.getString("hosts").split(",").toList
-    val port = row.getInt("port")
-
-    //graphite
-    val graphite_host = row.getString("graphite")
-    val graphana_host = row.getString("graphana")
-
+  def processClusterInfoPerRow (clusterEnv: ClusterEnv, clusterGroup: String) = {
     // ask for new cluster info
     counter += 1
-    worker ! ClusterInfoWorker.RetrieveClusterInfo(clusterGroup, cluster_name, hosts, port, uname, pword, graphite_host, graphana_host, ops_hosts,ops_uname, ops_pword, sequence)
+    log.info(s"Querying cassandra - " + clusterEnv.cluster_name)
+    worker ! ClusterInfoWorker.RetrieveClusterInfo(clusterEnv, clusterGroup)
   }
 
   override def receive: Receive = {
-    case ClusterInfoController.RetrieveAllClusterInfo(clusterGroup, session) => {
-      log.info(s"Get all clusterInfo for - $clusterGroup")
-      import scala.collection.JavaConversions._
-      log.info(s"Querying cassandra - " + session.getCluster.getMetadata.getClusterName + " " + session.getLoggedKeyspace )
-      val clusterRes = session.execute(new SimpleStatement(s"select * from cluster where group='$clusterGroup'"))
-      val clusterList= clusterRes.foldLeft() {
-        (a, row) =>  processClusterInfoPerRow(row, clusterGroup)
-      }
+    case ClusterInfoController.RetrieveAllClusterInfo(cluster) => {
+      cluster.foreach(cluster => {
+        log.info(s"Get all clusterInfo for - ${cluster.name}")
+        cluster.envs.foldLeft() {
+          (a, row) => processClusterInfoPerRow(row, cluster.name)
+        }
+      })
     }
 
     case ClusterInfoWorker.ClusterInfoRetrieved(clusterInfo) if counter == 1 => {
@@ -64,8 +49,8 @@ class ClusterInfoController(requester: ActorRef) extends Actor with ActorLogging
       counter -= 1
       clusterInfoList = clusterInfoList ++ SortedSet(clusterInfo)
       log.info(s"All rows processed. Total:  ${clusterInfoList.size}")
-      val allClusters = GroupClusters(clusterInfoList)
-      requester ! ClusterInfoController.AllClusterInfoRetrieved(allClusters)
+
+      requester ! ClusterInfoController.AllClusterInfoRetrieved(clusterInfoList)
     }
 
     case ClusterInfoWorker.ClusterInfoRetrieved(clusterInfo) => {

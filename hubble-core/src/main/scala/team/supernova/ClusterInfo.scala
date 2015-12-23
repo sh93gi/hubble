@@ -2,6 +2,7 @@ package team.supernova
 
 import com.datastax.driver.core._
 import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy
+import team.supernova.actor.ClusterEnv
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet
 import checks._
@@ -176,14 +177,7 @@ case class NodeHost(host: Host, opsCenterNode: Option[OpsCenterNode]) extends Or
 }
 
 
-case class ClusterInfo(metaData: Metadata,
-                       //opsCenterClusterInfo: Option[OpsCenterClusterInfo],
-                       graphite_host: String,
-                       graphana_host: String,
-                       sequence: Int,
-                       ops_hosts: String,
-                       ops_uname: String,
-                       ops_pword: String)
+case class ClusterInfo(metaData: Metadata, cluster: ClusterEnv, group: String)
   extends Checkable with Ordered[ClusterInfo] {
 
   val cluster_name = metaData.getClusterName
@@ -194,7 +188,7 @@ case class ClusterInfo(metaData: Metadata,
   }).to
 
   val opsKeyInfo: Map[String, List[String]]  = keyspaces.foldLeft(Map[String, List[String]]()){ (a,b) => a ++ Map( b.keyspace_name -> b.tables.map(_.table_name) ) }
-  val opsCenterClusterInfo: Option[OpsCenterClusterInfo] = OpsCenter.createOpsCenterClusterInfo(ops_hosts, ops_uname, ops_pword, cluster_name, opsKeyInfo )
+  val opsCenterClusterInfo: Option[OpsCenterClusterInfo] = OpsCenter.createOpsCenterClusterInfo(cluster.opscenter, cluster.ops_uname, cluster.ops_pword, cluster_name, opsKeyInfo )
   val hosts = metaData.getAllHosts.map(h => new NodeHost(h, opsCenterClusterInfo.flatMap(a => a.nodes.find(n => n.name.equals(h.getSocketAddress.getAddress.getHostAddress)))))
   //
   //TODO add cluster checks summary  ie check DC names etc!
@@ -207,8 +201,8 @@ case class ClusterInfo(metaData: Metadata,
   val children = keyspaces.toList
 
   def compare(that: ClusterInfo): Int = {
-    println (s"${this.cluster_name} compared to ${that.cluster_name}  = ${this.sequence compareTo that.sequence}")
-    this.sequence.toString compare that.sequence.toString
+    println (s"${this.cluster_name} compared to ${that.cluster_name}  = ${(this.cluster.sequence.toString compare that.cluster.sequence.toString) + this.group compare that.group} ")
+    (this.cluster.sequence.toString compare that.cluster.sequence.toString) + this.group compare that.group
   }
 
 
@@ -225,54 +219,54 @@ case class GroupClusters(clusterInfoList: SortedSet[ClusterInfo]) {
   }
 }
 
-//TODO most of this can be removed due to Actor setup :-)
-object ClusterInfo {
+////TODO most of this can be removed due to Actor setup :-)
+//
+//object ClusterInfo {
+//  def createClusterInfo(session: Session, group: String): GroupClusters = {
+//    val clusterRes = session.execute(new SimpleStatement(s"select * from cluster where group='$group'"))
+//
+//    //per CLuster
+//    val clusterList =
+//      clusterRes.foldLeft(List[ClusterInfo]()) { (a, row) =>
+//        val cluster_name = row.getString("cluster_name")
+//        println(s"$cluster_name - starting")
+//
+//        //get OpsCenter details
+//        val ops_uname = row.getString("ops_uname")
+//        val ops_pword = row.getString("ops_pword")
+//        val ops_hosts = row.getString("opscenter")
+//
+//       // val opsCenterClusterInfo = OpsCenter.createOpsCenterClusterInfo(ops_hosts, ops_uname, ops_pword, cluster_name)
+//
+//        //cluster config
+//        val uname = row.getString("uname")
+//        val pword = row.getString("pword")
+//        val hosts = row.getString("hosts").split(",")
+//        val port = row.getInt("port")
+//
+//        val sequence = row.getInt("sequence")
+//
+//        //graphite
+//        val graphite_host = row.getString("graphite")
+//        val graphana_host = row.getString("graphana")
+//
+//        //TODO add error handling and make reactive!
+//        lazy val clusSes: Session =
+//          Cluster.builder().
+//            addContactPoints(hosts: _*).
+//            withCompression(ProtocolOptions.Compression.SNAPPY).
+//            withCredentials(uname, pword)
+//            .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(5, 11)).
+//            withPort(port).
+//            build().
+//            connect()
+//        val clusterInfo = List(ClusterInfo(clusSes.getCluster.getMetadata, cluster))
+//        clusSes.close()
+//        println(s"$cluster_name - finished")
+//        a ++ clusterInfo
+//      }
+//    GroupClusters(clusterList.sorted.to[SortedSet])
+//  }
 
-  def createClusterInfo(session: Session, group: String): GroupClusters = {
-    val clusterRes = session.execute(new SimpleStatement(s"select * from cluster where group='$group'"))
 
-    //per CLuster
-    val clusterList =
-      clusterRes.foldLeft(List[ClusterInfo]()) { (a, row) =>
-        val cluster_name = row.getString("cluster_name")
-        println(s"$cluster_name - starting")
-
-        //get OpsCenter details
-        val ops_uname = row.getString("ops_uname")
-        val ops_pword = row.getString("ops_pword")
-        val ops_hosts = row.getString("opscenter")
-
-       // val opsCenterClusterInfo = OpsCenter.createOpsCenterClusterInfo(ops_hosts, ops_uname, ops_pword, cluster_name)
-
-        //cluster config
-        val uname = row.getString("uname")
-        val pword = row.getString("pword")
-        val hosts = row.getString("hosts").split(",")
-        val port = row.getInt("port")
-
-        val sequence = row.getInt("sequence")
-
-        //graphite
-        val graphite_host = row.getString("graphite")
-        val graphana_host = row.getString("graphana")
-
-        //TODO add error handling and make reactive!
-        lazy val clusSes: Session =
-          Cluster.builder().
-            addContactPoints(hosts: _*).
-            withCompression(ProtocolOptions.Compression.SNAPPY).
-            withCredentials(uname, pword)
-            .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(5, 11)).
-            withPort(port).
-            build().
-            connect()
-        val clusterInfo = List(ClusterInfo(clusSes.getCluster.getMetadata, graphite_host, graphana_host, sequence, ops_hosts, ops_uname, ops_pword))
-        clusSes.close()
-        println(s"$cluster_name - finished")
-        a ++ clusterInfo
-      }
-    GroupClusters(clusterList.sorted.to[SortedSet])
-  }
-
-
-}
+//}
