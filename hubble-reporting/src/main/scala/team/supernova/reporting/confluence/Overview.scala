@@ -20,7 +20,9 @@ case class KeyspaceInfo (keyspace       : String,
                          dcabApprover   : List[String],
                          devContacts    : List[String],
                          opsContacts    : List[String],
-                         productOwner   : List[String])
+                         productOwner   : List[String],
+                         app            : String,
+                         desc          : String)
 
 
 
@@ -101,27 +103,29 @@ case class KeyspaceInfo (keyspace       : String,
 
     //find linked page!!
     val linkedKeyspace =findLinkedKeyspace(content)
-
+    var applicationName: String  =null
     var dcab: String = null
     var dcabApprover = List[String]()
     var devContacts = List[String]()
     var opsContacts = List[String]()
     var productOwner = List[String]()
+    var desc: String = null
 
     //if (kPage.getTitle == "api_directory") {
     if (linkedKeyspace =="") {
       println(keyspaceName)
-      val applicationName = getTextFromTable(content, "Name of Application/UseCase")
+      applicationName = getTextFromTable(content, "Name of Application/UseCase")
       dcab = getTextFromTable(content, "DCAB Group")
       dcabApprover = getUsersFromValue(token, content, "DCAB Approver")
       devContacts = getUsersFromValue(token, content, "Dev contacts(s)")
       opsContacts = getUsersFromValue(token, content, "Ops contact(s)")
       productOwner = getUsersFromValue(token, content, "Product Owner")
+      desc = getTextFromTable( content, "Short Description of use-case")
     }
     else {
       println(keyspaceName +" -> "+ linkedKeyspace)
     }
-    var keyspaceInfo = new KeyspaceInfo(keyspaceName, "",linkedKeyspace,dcab, dcabApprover, devContacts, opsContacts, productOwner )
+    var keyspaceInfo = new KeyspaceInfo(keyspaceName, "",linkedKeyspace,dcab, dcabApprover, devContacts, opsContacts, productOwner, applicationName, desc )
     keyspaceInfo
 
   }

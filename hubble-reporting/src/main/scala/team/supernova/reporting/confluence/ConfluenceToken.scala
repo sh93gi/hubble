@@ -17,6 +17,7 @@ object ConfluenceToken {
     val confluenceUser = props.getProperty("confluence.user")
     val confluencePassword = props.getProperty("confluence.password")
     val endpointURL = props.getProperty("confluence.endpointaddress")
+    println (s"CONFIG: $confluenceUser  $endpointURL")
     val token: Token = Token.getInstance
 
     token.initialise(confluenceUser, confluencePassword,endpointURL )
