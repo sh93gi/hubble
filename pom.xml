@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>team.supernova.hubble</groupId>
     <artifactId>hubble</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <scm>
         <connection>scm:git:https://github.com/Supernova-Team/hubble.git</connection>
         <developerConnection>scm:git:https://github.com/Supernova-Team/hubble.git</developerConnection>
-    </scm>
+      <tag>hubble-0.1</tag>
+  </scm>
 
     <!--Main ain pom file &ndash;&gt;-->
     <!--<profiles>-->
@@ -34,7 +33,9 @@
         <module>hubble-core</module>
         <module>hubble-reporting</module>
     </modules>
-
+    <properties>
+        <scala.version>2.11.7</scala.version>
+    </properties>
     <build>
         <plugins>
 
@@ -70,7 +71,25 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
-
+            <!-- enable scalatest -->
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>1.0</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>WDF TestSuite.txt</filereports>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
         </plugins>
         <testResources>
@@ -78,10 +97,11 @@
                 <directory>${basedir}/src/test/resources</directory>
                 <filtering>true</filtering>
                 <includes>
-                    <include>**/*.properties</include>
+                    <include>**/*.conf</include>
                 </includes>
             </testResource>
         </testResources>
+
         <!--<resources>-->
             <!--<resource>-->
                 <!--<directory>src/main/resources</directory>-->
@@ -95,9 +115,20 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_2.11</artifactId>
+            <version>3.0.0-M7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-xml_2.11</artifactId>
+            <version>1.0.5</version>
+        </dependency>
+        <dependency>
             <groupId>team.supernova.confluence</groupId>
             <artifactId>ConfluenceAPI</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
     </dependencies>
     <repositories>

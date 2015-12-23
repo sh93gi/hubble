@@ -1,6 +1,7 @@
 package team.supernova.reporting.confluence
 
 import java.util.Properties
+import com.typesafe.config.Config
 import team.supernova.confluence.soap.rpc.soap.actions.Token
 
 
@@ -20,6 +21,15 @@ object ConfluenceToken {
     println (s"CONFIG: $confluenceUser  $endpointURL")
     val token: Token = Token.getInstance
 
+    token.initialise(confluenceUser, confluencePassword,endpointURL )
+    token
+  }
+
+  def getConfluenceToken(config: Config) = {
+    val confluenceUser = config.getString("hubble.confluence.user")
+    val confluencePassword = config.getString("hubble.confluence.password")
+    val endpointURL = config.getString("hubble.confluence.endpointaddress")
+    val token: Token = Token.getInstance
     token.initialise(confluenceUser, confluencePassword,endpointURL )
     token
   }

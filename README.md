@@ -9,25 +9,29 @@ Hubble is a 'telescope' into a group of cassandra clusters to help make life eas
 
 
 ## Getting Started
-
-- Add maven parameters
-```XML
-<confluence.user>the user used for connecting to Confluence</confluence.user>
-<confluence.password>the password used for connecting to Confluence</confluence.password>
-<confluence.endpointaddress>the url of the Confluence SOAP endpoint</confluence.endpointaddress>
-<confluence.space>the Confluence space where you want to write the pages to</confluence.space>
-<confluence.group>the page group on the space you want to write to</confluence.group>
-
-<hubble.cassandra.username>the user to connect to Cassandra</hubble.cassandra.username>
-<hubble.cassandra.password>the password to connect to Cassandra</hubble.cassandra.password>
-<hubble.cassandra.keyspace>the keyspace which you want to connect to</hubble.cassandra.keyspace>
-<hubble.cassandra.host>hosts list (comma separated) for connecting to Cassandra</hubble.cassandra.host>
-<hubble.cassandra.port>port used to connect to Cassandra (e.g. 9042)</hubble.cassandra.port>
+This project uses scala config. You need to setup ```application.conf``` in the resource folder. 
+There is ```application.conf.example``` file available in the resource folder that explains how to do this. ```application.conf.example``` is in typesafe HOCON format. 
+Locations that this file should be inserted are: 
 ```
-- Add example insert statement
-- Add table definition
+hubble-core/src/main/resources
+hubble-core/src/test/resources
+hubble-reporting/src/test/resources
+```
+By adding to ```hubble-core/src/main/resources```, you can run the application locally. Use ```ClusterInfoApp``` located in ```hubble-core``` as main.
+By adding to ```hubble-core/src/test/resources``` and ```hubble-reporting/src/test/resources``` you can test the whole application.
 
-
+## Packaging and running the application
+after adding ```application.conf``` to test resources, run 
+```
+ mvn clean install 
+```
+This will create a package for you at target in Hubble-core component. 
+The generated jar file, intentionally leaves out ```application.conf```. 
+In case of having different configuration for different environments, this feature becomes very handy.
+You can run the jar by providing ```application.conf``` from outside. example:
+```
+java -Dconfig.file='{some-location}/application.conf' -jar hubble-core-1.0-SNAPSHOT-jar-with-dependencies.jar
+```
 
 
 
@@ -41,8 +45,5 @@ Please enable the following features in confluence otherwise the generated pages
 - [HTML macros](https://confluence.atlassian.com/display/DOC/HTML+Macro) 
 
 
-## Still TODO:
-- Add configuration to get started.
-- Make standalone jar (instead of test case to generate pages)
-- Add list after presenting at Cassandra Summit 2015 :-)
+
 

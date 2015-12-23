@@ -1,21 +1,17 @@
 package team.supernova
 
-import java.util.Properties
-import com.datastax.driver.core.{ProtocolOptions, Session, Cluster}
 import akka.actor.ActorSystem
+import com.datastax.driver.core.{Cluster, ProtocolOptions, Session}
 
 
-trait TestCassandraCluster  {
+trait TestCassandraCluster {
   def system: ActorSystem
-  import scala.collection.JavaConversions._
 
-  val props: Properties = new Properties
-  props.load(this.getClass.getClassLoader.getResourceAsStream("test.properties"))
-  val username = props.getProperty("hubble.cassandra.username")
-  val password = props.getProperty("hubble.cassandra.password")
-  val port = props.getProperty("hubble.cassandra.port").toInt
-  val keyspace = props.getProperty("hubble.cassandra.keyspace")
-  val hosts = props.getProperty("hubble.cassandra.hosts").split(",").toList
+  val username = system.settings.config.getString("hubble.cassandra.username")
+  val password = system.settings.config.getString("hubble.cassandra.password")
+  val port = system.settings.config.getString("hubble.cassandra.port").toInt
+  val keyspace = system.settings.config.getString("hubble.cassandra.keyspace")
+  val hosts = system.settings.config.getString("hubble.cassandra.hosts").split(",").toList
 
   lazy val session: Session =
     Cluster.builder().
