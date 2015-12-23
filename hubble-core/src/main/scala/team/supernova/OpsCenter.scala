@@ -96,8 +96,11 @@ object OpsCenter {
                      metricName: String ) : Double = {
     var retVal: Double = -1
     try {
-      val metric = Http(s"http://$host/$clusterName/metrics/$node/${keyspaceName}/$tableName/$metricName?step=1440").header("opscenter-session", login.sessionid).header("Accept", "text/json").timeout(connTimeoutMs = 1000, readTimeoutMs = 10000).asString.body
-      retVal = (parse(metric) \\ "AVERAGE").children.map(_.values).tail.head.asInstanceOf[List[Double]](1)
+      val url = s"http://$host/$clusterName/metrics/$node/${keyspaceName}/$tableName/$metricName?step=5&start=${System.currentTimeMillis / 1000 - 300}"
+      //println (url)
+      val metric = Http(url).header("opscenter-session", login.sessionid).header("Accept", "text/json").timeout(connTimeoutMs = 1000, readTimeoutMs = 10000).asString.body
+      //println (metric)
+      retVal = (parse(metric) \\ "MAX").children.map(_.values).head.asInstanceOf[List[Double]](1)
       println (s"$clusterName.$keyspaceName.$tableName $metricName on $node = $retVal ")
    } catch
       {case e: Exception => {
