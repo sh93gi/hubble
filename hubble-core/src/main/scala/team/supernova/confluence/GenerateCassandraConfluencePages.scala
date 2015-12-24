@@ -178,7 +178,7 @@ object GenerateCassandraConfluencePages {
         <h1>Cluster: {clusterInfo.cluster_name}</h1>
         <p>{ Confluence.confluenceCodeBlock("Errors", clusterErrors ,"none")}
           { Confluence.confluenceCodeBlock("Warnings", clusterWarnings ,"none")}</p>
-          <img src={s"http://${clusterInfo.graphite_host}/render?from=-2hours&until=now&width=400&height=250&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.mean&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.max&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.p99&_uniq=0.8728725090622902"}/>
+          <img src={s"http://${clusterInfo.cluster.graphite}/render?from=-2hours&until=now&width=400&height=250&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.mean&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.max&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.p99&_uniq=0.8728725090622902"}/>
         <h1>Host Information</h1>
         <p>
           <table>
@@ -245,7 +245,7 @@ object GenerateCassandraConfluencePages {
             at +
             <tr>
               <td><a href={s"/display/$project/${clus.cluster_name.replace(" ","+")}"}>{clus.cluster_name}</a></td>
-              <td>{clusterGraphite(clus.cluster_name, clus.graphana_host)}</td>
+              <td>{clusterGraphite(clus.cluster_name, clus.cluster.graphana)}</td>
               <td>{errors.size}</td>
               <td>{warnings.size}</td>
               <td>{ Confluence.confluenceCodeBlock("Error", errors.foldLeft(""){(a,w) => a + w.details + "\n" } ,"none")}
@@ -290,7 +290,7 @@ object GenerateCassandraConfluencePages {
 
   //TODO create Cluster page if not exits and group page if does not exist!
   //TODO CHeck if gets updated the first ever time
-    def generateAllConfluencePages ( allClusters    : GroupClusters,
+    def generateGroupConfluencePages ( allClusters    : GroupClusters,
                                      project        : String,
                                      mainPageName   : String,
                                      token          : Token,
@@ -373,8 +373,9 @@ object GenerateCassandraConfluencePages {
             if (allClusters.clusterInfoList.filter(cList => cList.cluster_name.toUpperCase.equals(cPage.getTitle)).
               flatMap(cl => cl.keyspaces).count(k => k.keyspace_name.toUpperCase.equals(substringAfter(kPage.getTitle," - "))) == 0 )
               {
-                println (s"DELETING page($deletePages): ${kPage.getTitle}")
+                println (s"Found page to be deleted: ${kPage.getTitle}, DeletePage is $deletePages")
                 if (deletePages) {
+                  println (s"DELETING page: ${kPage.getTitle}")
                   page.remove(kPage.getId)
                   println (s"DELETED page: ${kPage.getTitle}")
                 }

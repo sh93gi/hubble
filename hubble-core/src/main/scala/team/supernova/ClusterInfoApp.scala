@@ -2,8 +2,12 @@ package team.supernova
 
 import akka.actor.ActorSystem
 import com.datastax.driver.core.{Cluster, ProtocolOptions, Session}
-import team.supernova.actor.ClusterInfoCollector
+import com.typesafe.config.Config
+import team.supernova.actor.ClusterInfoCollector.Start
+import team.supernova.actor.{CassandraClusterGroup, ClusterEnv, ClusterInfoCollector}
 import team.supernova.confluence.ConfluenceToken
+
+import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 
 object ClusterInfoApp extends App {
@@ -15,24 +19,25 @@ object ClusterInfoApp extends App {
 
   def startScheduleEveryDay() = {
     import system.dispatcher
-    val GROUP = system.settings.config.getString("hubble.confluence.group")
     val SPACE = system.settings.config.getString("hubble.confluence.space")
-    val app = system.actorOf(ClusterInfoCollector.props(SPACE, GROUP, TOKEN))
-    system.scheduler.schedule(0 milliseconds, 24 hours, app, ClusterInfoCollector.Start(GROUP, cassandraSession))
+
+    val clusters = mapConfigToCassandraClusterGroup(system.settings.config)
+    val app = system.actorOf(ClusterInfoCollector.props(SPACE, TOKEN))
+    app ! Start(clusters)
   }
 
-  def cassandraSession: Session = {
-    val username = system.settings.config.getString("hubble.cassandra.username")
-    val password = system.settings.config.getString("hubble.cassandra.password")
-    val port = system.settings.config.getInt("hubble.cassandra.port")
-    val keyspace = system.settings.config.getString("hubble.cassandra.keyspace")
-    val hosts = system.settings.config.getString("hubble.cassandra.hosts").split(",").toList
-    Cluster.builder().
-      addContactPoints(hosts: _*).
-      withCompression(ProtocolOptions.Compression.SNAPPY).
-      withPort(port).
-      withCredentials(username, password).
-      build().
-      connect(keyspace)
+  def mapConfigToClusterEnv(pr: Config): ClusterEnv = {
+    new ClusterEnv(pr.getString("cluster_name"),
+      pr.getString("graphana"),
+      pr.getString("graphite"),
+      pr.getStringList("hosts").map(_.toString).toArray, pr.getString("ops_pword"), pr.getString("ops_uname"), pr.getString("opscenter"),
+      pr.getInt("port"), pr.getString("pword"), pr.getString("uname"), pr.getInt("sequence"))
+  }
+
+  def mapConfigToCassandraClusterGroup(config: Config): List[CassandraClusterGroup] = {
+    config.getConfigList("hubble.cassandra.clusters")
+      .map({ p: Config => new CassandraClusterGroup(p.getString("name"), p.getConfigList("envs")
+      map mapConfigToClusterEnv toList)
+    }).toList
   }
 }
