@@ -4,7 +4,7 @@
 
     <groupId>team.supernova.hubble</groupId>
     <artifactId>hubble</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <scm>
