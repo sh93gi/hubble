@@ -4,13 +4,13 @@
 
     <groupId>team.supernova.hubble</groupId>
     <artifactId>hubble</artifactId>
-    <version>0.2</version>
+    <version>0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <scm>
         <connection>scm:git:https://github.com/Supernova-Team/hubble.git</connection>
         <developerConnection>scm:git:https://github.com/Supernova-Team/hubble.git</developerConnection>
-      <tag>hubble-0.2</tag>
+      <tag>hubble-0.1</tag>
   </scm>
 
     <!--Main ain pom file &ndash;&gt;-->
