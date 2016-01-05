@@ -7,11 +7,11 @@
     <parent>
 		<groupId>team.supernova.hubble</groupId>
 		<artifactId>hubble</artifactId>
-		<version>0.2</version>
+		<version>0.2-SNAPSHOT</version>
     </parent>
 
 	<artifactId>hubble-core</artifactId>
-	<version>0.2</version>
+	<version>0.2-SNAPSHOT</version>
 	<name>Core module for Hubble</name>
 	<packaging>jar</packaging>
 
