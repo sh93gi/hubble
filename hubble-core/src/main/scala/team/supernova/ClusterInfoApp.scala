@@ -8,7 +8,6 @@ import team.supernova.actor.{CassandraClusterGroup, ClusterEnv, ClusterInfoColle
 import team.supernova.confluence.ConfluenceToken
 
 import scala.collection.JavaConversions._
-import scala.concurrent.duration._
 
 object ClusterInfoApp extends App {
 
@@ -18,11 +17,10 @@ object ClusterInfoApp extends App {
   startScheduleEveryDay()
 
   def startScheduleEveryDay() = {
-    import system.dispatcher
     val SPACE = system.settings.config.getString("hubble.confluence.space")
 
     val clusters = mapConfigToCassandraClusterGroup(system.settings.config)
-    val app = system.actorOf(ClusterInfoCollector.props(SPACE, TOKEN))
+    val app = system.actorOf(ClusterInfoCollector.props(SPACE, TOKEN, system))
     app ! Start(clusters)
   }
 
