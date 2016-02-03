@@ -18,7 +18,7 @@ class ConfluencePage(space: String, token: Token) extends Actor with ActorLoggin
   override def receive: Receive = {
     case ConfluencePage.GenerateAll(clusterInfoSet) => {
       log.info("Start generating confluence pages")
-      // TODO make reactive
+      // TODO create separate actor instead of looping over groups
       val clusterMap = clusterInfoSet.groupBy(f => f.group)
       clusterMap.foreach(
         map =>

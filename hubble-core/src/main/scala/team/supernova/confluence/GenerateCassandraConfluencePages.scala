@@ -316,9 +316,8 @@ object GenerateCassandraConfluencePages {
         newPage.setTitle(tokenPageName)
         newPage.setParentId(parentPage.getId)
         newPage.setSpace(parentPage.getSpace)
-        page.store(newPage)
+        tokenPage = page.store(newPage)
         println (s"$tokenPageName page created!")
-        tokenPage = newPage
       }
     }
 
