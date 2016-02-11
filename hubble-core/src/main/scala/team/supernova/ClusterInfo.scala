@@ -1,13 +1,10 @@
 package team.supernova
 
 import com.datastax.driver.core._
-import team.supernova.Check
 import team.supernova.actor.ClusterEnv
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet
 import checks._
-
-import scala.tools.scalap.scalax.util.StringUtil
 
 /**
  * Created by Gary Stewart on 4-8-2015.
