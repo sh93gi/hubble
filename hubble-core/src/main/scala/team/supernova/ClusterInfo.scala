@@ -1,7 +1,6 @@
 package team.supernova
 
 import com.datastax.driver.core._
-import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy
 import team.supernova.actor.ClusterEnv
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet
@@ -11,10 +10,23 @@ import checks._
  * Created by Gary Stewart on 4-8-2015.
  *
  */
-
 object checks {
   def combineChecks(acc: List[Check], checkable: List[Checkable]): List[Check] =
     acc ++ checkable.flatMap(_.checks)
+}
+
+object StringValidation {
+  val alphaNumericLowercase=(('a' to 'z') ++ ('0' to '9') ++ "_").toSet
+  val alphaNumeric=(('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ "_").toSet
+  val alpha=(('a' to 'z') ++ ('A' to 'Z')).toSet
+  def isAlphaNumericLowercase(s:String)=s.forall(alphaNumericLowercase.contains(_))
+  def isAlphaNumeric(s:String)=s.forall(alphaNumeric.contains(_))
+  def startsWithLetter(s:String)=s match {
+    case "" => false
+    case _ => s.head.toString.forall(alpha.contains(_))
+  }
+  def isNotTooLong(str: String): Boolean=str.size<32
+  def isNotABitLong(str: String): Boolean=str.size<24
 }
 
 case class Check(name: String, details: String, hasPassed: Boolean, severity: String)
@@ -50,11 +62,13 @@ case class Column(columnMetadata: ColumnMetadata, keyType: String) extends Check
     ""
   }
 
-
   val myChecks: List[Check] = {
     List(
       Check("Secondary Index exists", s"$index_name index on table $table_name.$column_name!", index_name == "", "warning"),
-      Check("ColumnName is non-lowercase", s"$table_name.$column_name is not lower case!", column_name.equals(column_name.toLowerCase), "warning")
+      Check("ColumnName begin letter", s"$table_name.$column_name is not beginning with a letter.", StringValidation.startsWithLetter(column_name), "warning"),
+      Check("ColumnName length check", s"Column name $table_name.$column_name is too long", StringValidation.isNotTooLong(column_name), "error"),
+      Check("ColumnName length warning", s"Column name $table_name.$column_name is a bit long", StringValidation.isNotABitLong(column_name), "warning"),
+      Check("ColumnName check", s"Column name $table_name.$column_name is not according to the naming conventions", StringValidation.isAlphaNumericLowercase(column_name), "warning")
     )
   }
   val children = List.empty
@@ -101,20 +115,19 @@ case class Table(tableMetadata: TableMetadata) extends Checkable  with Ordered [
     selectStatements ++ List(insertStatement) ++ deleteStatements
   }
 
-
-  //TODO extra table checks based on properties
+  // TODO extra table checks based on properties
   val myChecks: List[Check] = List(
     Check("Single column table", s"$table_name only has one column!", columns.size != 1, "warning"),
-    Check("TableName is non-lowercase", s"$table_name is not lower case!", table_name.equals(table_name.toLowerCase), "warning")
+    Check("TableName begin letter", s"$table_name is not beginning with a letter.", StringValidation.startsWithLetter(table_name), "warning"),
+    Check("TableName length check", s"Table name ${table_name} is too long", StringValidation.isNotTooLong(table_name), "error"),
+    Check("TableName length warning", s"Table name ${table_name} is a bit long", StringValidation.isNotABitLong(table_name), "warning"),
+    Check("TableName check", s"Table name ${table_name} is not according to the naming conventions", StringValidation.isAlphaNumericLowercase(table_name), "warning")
   )
 
   val children = columns
-
 }
 
-
 case class Link(from: Table, to: Table, on: String)
-
 
 case class Keyspace(  keyspaceMetaData: KeyspaceMetadata,
                       private val validDCnames: SortedSet[String]
@@ -125,10 +138,10 @@ case class Keyspace(  keyspaceMetaData: KeyspaceMetadata,
   def compare(that: Keyspace): Int = this.keyspace_name.toLowerCase compare that.keyspace_name.toLowerCase
 
   val keyspace_name = keyspaceMetaData.getName
-  //TODO fix so that it is the entire schema
+  // TODO fix so that it is the entire schema
   val schemaScript = keyspaceMetaData.asCQLQuery()  //only contains the keyspace
   val tables: List[Table] = keyspaceMetaData.getTables.foldLeft(List[Table]()) { (a, t) => a ++ List(Table(t)) }.sorted
-  //TODO make more elegant!
+  // TODO make more elegant!
   val dataCenter: SortedSet[String] = keyspaceMetaData.getReplication.filterNot(a => a._1.equals("class")).filterNot(b => b._1.equals("replication_factor")).map(_._1).to
 
   //for each table check if link (pks) exists in another table
@@ -147,21 +160,22 @@ case class Keyspace(  keyspaceMetaData: KeyspaceMetadata,
     }
   }
 
-  val ignoreKeyspaces: Set[String] = Set("system_auth", "system_traces", "system", "dse_system")
+  val ignoreKeyspaces: Set[String] = Set("system_auth", "system_traces", "system", "system_admin", "dse_system", "dse_security", "dse_perf", "solr_admin")
+  val dcNames = dataCenter.foldLeft("") { (a, w) => a + " '" + w + "'" }
 
   val myChecks: List[Check] = List(
-    //TODO ignore cassandraerrors and mutations otherwise appears to be used!!
-    //TODO check DC names are valid
+    // TODO check DC names are valid
     Check("Keyspace is unused check", s"No tables in keyspace: $keyspace_name!", tables.size > 0, "warning"),
-    Check("CassandraErrors table check", s"$keyspace_name has no CassandraErrors table.", ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("cassandraerrors")) != 0, "warning"),
-    Check("ModelMutation table check", s"$keyspace_name has no ModelMutation table.", ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("modelmutation")) != 0, "info"),
-    //DC checks a + b = a  so nothing added
-    //TODO remove treeset from DC message!
-    Check("Data Center names check", s"$keyspace_name has incorrect DC names: ${dataCenter.foldLeft("") { (a, w) => a + " '" + w + "'" }}", validDCnames ++ dataCenter == validDCnames, "error")
+    // TODO when CassandraErrors is completely removed from the supernova driver when this message may change again
+    Check("CassandraErrors table check", s"$keyspace_name contains CassandraErrors table. This is not mandatory anymore.", ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("cassandraerrors")) == 1, "info"),
+    Check("ModelMutation table check", s"$keyspace_name has no ModelMutation table. Are you using Nolio for setting your cassandra data model?", ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("modelmutation")) != 0, "info"),
+    Check("Data Center names check", s"$keyspace_name has incorrect DC names:${dcNames}", validDCnames ++ dataCenter == validDCnames, "error"),
+    Check("KeyspaceName length check", s"Keyspace name ${keyspace_name} is too long", StringValidation.isNotTooLong(keyspace_name), "error"),
+    Check("KeyspaceName length warning", s"Keyspace name ${keyspace_name} is a bit long", StringValidation.isNotABitLong(keyspace_name), "warning"),
+    Check("KeyspaceName check", s"Keyspace name ${keyspace_name} is not according to the naming conventions", StringValidation.isAlphaNumericLowercase(keyspace_name), "warning")
   )
   val children = tables
 }
-
 
 case class NodeHost(host: Host, opsCenterNode: Option[OpsCenterNode]) extends Ordered[NodeHost] {
 
@@ -172,10 +186,8 @@ case class NodeHost(host: Host, opsCenterNode: Option[OpsCenterNode]) extends Or
   val dataCenter = host.getDatacenter
   val canonicalHostName = host.getAddress.getCanonicalHostName
   val rack = host.getRack
-  //TODO add opsCenter Info and warnings!
-
+  // TODO add opsCenter Info and warnings!
 }
-
 
 case class ClusterInfo(metaData: Metadata, cluster: ClusterEnv, group: String)
   extends Checkable with Ordered[ClusterInfo] {
@@ -190,9 +202,8 @@ case class ClusterInfo(metaData: Metadata, cluster: ClusterEnv, group: String)
   val opsKeyInfo: Map[String, List[String]]  = keyspaces.foldLeft(Map[String, List[String]]()){ (a,b) => a ++ Map( b.keyspace_name -> b.tables.map(_.table_name) ) }
   val opsCenterClusterInfo: Option[OpsCenterClusterInfo] = OpsCenter.createOpsCenterClusterInfo(cluster.opscenter, cluster.ops_uname, cluster.ops_pword, cluster_name, opsKeyInfo )
   val hosts = metaData.getAllHosts.map(h => new NodeHost(h, opsCenterClusterInfo.flatMap(a => a.nodes.find(n => n.name.equals(h.getSocketAddress.getAddress.getHostAddress)))))
-  //
-  //TODO add cluster checks summary  ie check DC names etc!
-  //TODO implement compare keyspaces - one cluster to another
+  // TODO add cluster checks summary  ie check DC names etc!
+  // TODO implement compare keyspaces - one cluster to another
 
   val myChecks: List[Check] = List(
     Check("Cluster agreement check", s"$cluster_name schema agreement issues!", schemaAgreement, "error")
@@ -205,68 +216,15 @@ case class ClusterInfo(metaData: Metadata, cluster: ClusterEnv, group: String)
     (this.cluster.sequence.toString compare that.cluster.sequence.toString) + this.group compare that.group
   }
 
-
 }
 
 case class GroupClusters(clusterInfoList: SortedSet[ClusterInfo]) {
 
   val checks: List[Check] = {
     val clusterChecks = List(
-      //TODO check naming conventions of DC names
+      // TODO check naming conventions of DC names
       Check("Check DC names TODO", s"FIXME!", true, "warning")
     )
     clusterInfoList.foldLeft(clusterChecks) { (acc, clust) => acc ++ clust.checks }
   }
 }
-
-////TODO most of this can be removed due to Actor setup :-)
-//
-//object ClusterInfo {
-//  def createClusterInfo(session: Session, group: String): GroupClusters = {
-//    val clusterRes = session.execute(new SimpleStatement(s"select * from cluster where group='$group'"))
-//
-//    //per CLuster
-//    val clusterList =
-//      clusterRes.foldLeft(List[ClusterInfo]()) { (a, row) =>
-//        val cluster_name = row.getString("cluster_name")
-//        println(s"$cluster_name - starting")
-//
-//        //get OpsCenter details
-//        val ops_uname = row.getString("ops_uname")
-//        val ops_pword = row.getString("ops_pword")
-//        val ops_hosts = row.getString("opscenter")
-//
-//       // val opsCenterClusterInfo = OpsCenter.createOpsCenterClusterInfo(ops_hosts, ops_uname, ops_pword, cluster_name)
-//
-//        //cluster config
-//        val uname = row.getString("uname")
-//        val pword = row.getString("pword")
-//        val hosts = row.getString("hosts").split(",")
-//        val port = row.getInt("port")
-//
-//        val sequence = row.getInt("sequence")
-//
-//        //graphite
-//        val graphite_host = row.getString("graphite")
-//        val graphana_host = row.getString("graphana")
-//
-//        //TODO add error handling and make reactive!
-//        lazy val clusSes: Session =
-//          Cluster.builder().
-//            addContactPoints(hosts: _*).
-//            withCompression(ProtocolOptions.Compression.SNAPPY).
-//            withCredentials(uname, pword)
-//            .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(5, 11)).
-//            withPort(port).
-//            build().
-//            connect()
-//        val clusterInfo = List(ClusterInfo(clusSes.getCluster.getMetadata, cluster))
-//        clusSes.close()
-//        println(s"$cluster_name - finished")
-//        a ++ clusterInfo
-//      }
-//    GroupClusters(clusterList.sorted.to[SortedSet])
-//  }
-
-
-//}
