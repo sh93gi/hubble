@@ -6,6 +6,7 @@ import com.datastax.driver.core.{Session}
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
 import team.supernova._
+import team.supernova.graphite.GraphiteApi
 
 import scala.collection.SortedSet
 /**
@@ -166,6 +167,7 @@ object GenerateCassandraConfluencePages {
 
     val clusterWarnings = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("warning")).foldLeft(""){(a,w) => a + w.details + "\n" }
     val clusterErrors = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("error")).foldLeft(""){(a,w) => a + w.details + "\n" }
+    val clusterGraphUrl = new GraphiteApi(clusterInfo.cluster.graphite).clusterGraphUrl(clusterInfo.cluster_name)
 
     import org.json4s._
     import org.json4s.jackson.JsonMethods._
@@ -178,7 +180,7 @@ object GenerateCassandraConfluencePages {
         <h1>Cluster: {clusterInfo.cluster_name}</h1>
         <p>{ Confluence.confluenceCodeBlock("Errors", clusterErrors ,"none")}
           { Confluence.confluenceCodeBlock("Warnings", clusterWarnings ,"none")}</p>
-          <img src={s"http://${clusterInfo.cluster.graphite}/render?from=-2hours&until=now&width=400&height=250&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.mean&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.max&target=LLDS.Cassandra.${clusterInfo.cluster_name}.requests.p99&_uniq=0.8728725090622902"}/>
+          <img src={ clusterGraphUrl }/>
         <h1>Host Information</h1>
         <p>
           <table>

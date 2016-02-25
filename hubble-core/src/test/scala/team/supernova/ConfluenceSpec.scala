@@ -11,9 +11,10 @@ import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
  * Created by Gary Stewart on 4-8-2015.
  *
  */
-class ConfluenceSpec  extends TestKit(ActorSystem("ClusterInfoSpec"))
+class ConfluenceSpec
+  extends TestKit(ActorSystem("ConfluenceSpec"))
   with FunSpecLike
-  with ConfluenceTestBase {
+  with ConfluenceFixture {
 //  it  ("Pretty Print ClusterInfo") {
 //   // val cluster = ClusterInfo.createClusterInfo(session, GROUP)
 //    //TODO fix me

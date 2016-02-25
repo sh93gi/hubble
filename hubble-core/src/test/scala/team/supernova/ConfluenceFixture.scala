@@ -3,7 +3,7 @@ package team.supernova
 import akka.actor.ActorSystem
 import team.supernova.confluence.ConfluenceToken
 
-trait ConfluenceTestBase {
+trait ConfluenceFixture {
   def system: ActorSystem
 
   val TOKEN = ConfluenceToken.getConfluenceToken(system.settings.config)

@@ -7,9 +7,9 @@ import Matchers._
 import team.supernova.cassandra.CassandraClusterApi
 
 class CassandraSpec
-  extends TestKit(ActorSystem("ClusterInfoSpec"))
+  extends TestKit(ActorSystem("CassandraSpec"))
   with FunSpecLike
-  with CassandraTestBase {
+  with CassandraFixture {
 
   describe("Cassandra info retriever"){
     it  ("should connect") {
