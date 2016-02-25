@@ -1,8 +1,8 @@
 package team.supernova.actor
 
 import akka.actor.{Actor, ActorLogging}
-import com.datastax.driver.core._
 import team.supernova.ClusterInfo
+import team.supernova.cassandra.{CassandraClusterApi, ClusterEnv}
 
 object ClusterInfoWorker {
   case class RetrieveClusterInfo(cluster: ClusterEnv, group: String)
@@ -15,12 +15,8 @@ class ClusterInfoWorker extends Actor with ActorLogging  {
       log.info(s"Get cluster info for ${cluster.cluster_name}")
       //TODO get OpsCenter Info via Actor!
       //val opsCenterClusterInfo = OpsCenter.createOpsCenterClusterInfo(ops_hosts, ops_uname, ops_pword, clusterName )
-      lazy val clusSes: Session = Cluster.builder().addContactPoints(cluster.hosts: _*).withCompression(ProtocolOptions.Compression.SNAPPY).withCredentials(cluster.uname, cluster.pword).withPort(cluster.port).build().connect()
-      //TODO add ops Center Info!!!!! via messages!!!!!
-      // val clusterInfo = ClusterInfo(clusSes.getCluster.getMetadata,  opsCenterClusterInfo, graphite_host, graphana_host, sequence)
-      val clusterInfo = ClusterInfo(clusSes.getCluster.getMetadata, cluster, group)
-      println("clusterInfo: " + clusterInfo)
-      clusSes.close()
+
+      val clusterInfo = new CassandraClusterApi(cluster).clusterInfo(group)
       sender ! ClusterInfoWorker.ClusterInfoRetrieved(clusterInfo)
     }
   }

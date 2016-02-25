@@ -4,7 +4,8 @@ import akka.actor.ActorSystem
 import com.datastax.driver.core.{Cluster, ProtocolOptions, Session}
 import com.typesafe.config.Config
 import team.supernova.actor.ClusterInfoCollector.Start
-import team.supernova.actor.{CassandraClusterGroup, ClusterEnv, ClusterInfoCollector}
+import team.supernova.actor.{CassandraClusterGroup, ClusterInfoCollector}
+import team.supernova.cassandra.ClusterEnv
 import team.supernova.confluence.ConfluenceToken
 
 import scala.collection.JavaConversions._
