@@ -2,9 +2,8 @@ package team.supernova
 
 import akka.actor.ActorSystem
 
-trait ClusterFixture {
+trait CassandraClusterGroupFixture {
   def system: ActorSystem
   val cassandragroup = ClusterInfoApp.mapConfigToCassandraClusterGroup(system.settings.config)
-  val clusterInstance = cassandragroup.head.envs.last // llds2 test, which is smaller than llds1 sbx
 
 }
