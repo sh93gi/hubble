@@ -10,10 +10,9 @@ class CassandraClusterApi(cluster: ClusterEnv) {
   def metadata(): Metadata = {
     using(new ClusterEnvConnector(cluster).connect()){
       clusSes=>{
-        val clusterMetaData = clusSes.getCluster.getMetadata
-        log.info(s"clusterMetaData: $clusterMetaData")
-        return clusterMetaData
-
+        val metadata = clusSes.getCluster.getMetadata
+        log.info(s"cluster metadata: $metadata")
+        metadata
       }
     }
   }
