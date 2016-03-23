@@ -96,7 +96,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>team.supernova.ClusterInfoApp</mainClass>
+							<mainClass>team.supernova.HubbleApp</mainClass>
 						</manifest>
 					</archive>
 					<descriptor>assembly.xml</descriptor>

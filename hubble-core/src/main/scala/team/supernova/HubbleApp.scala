@@ -3,16 +3,17 @@ package team.supernova
 import java.util.Map.Entry
 
 import akka.actor.ActorSystem
+import team.supernova.actor.HubbleActor
+import team.supernova.actor.HubbleActor.Start
+import team.supernova.actor.collect.CassandraClusterGroup
 import com.typesafe.config.{Config, ConfigObject, ConfigValue}
-import team.supernova.actor.ClusterInfoCollector.Start
-import team.supernova.actor.{CassandraClusterGroup, ClusterInfoCollector}
 import team.supernova.cassandra.ClusterEnv
 import team.supernova.confluence.ConfluenceToken
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
-object ClusterInfoApp extends App {
+object HubbleApp extends App {
 
   val system = ActorSystem("ClusterInfo")
   val TOKEN = ConfluenceToken.getConfluenceToken(system.settings.config)
@@ -23,7 +24,7 @@ object ClusterInfoApp extends App {
     val SPACE = system.settings.config.getString("hubble.confluence.space")
 
     val clusters = mapConfigToCassandraClusterGroup(system.settings.config)
-    val app = system.actorOf(ClusterInfoCollector.props(SPACE, TOKEN, system))
+    val app = system.actorOf(HubbleActor.props(SPACE, TOKEN, system))
     app ! Start(clusters)
   }
 

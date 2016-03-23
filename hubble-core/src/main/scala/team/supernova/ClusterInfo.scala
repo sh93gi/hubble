@@ -1,7 +1,7 @@
 package team.supernova
 
 import com.datastax.driver.core._
-import team.supernova.cassandra.{ClusterEnv, OpsCenterApi}
+import team.supernova.cassandra.{ClusterEnv, ClusterSlowQueries, OpsCenterApi}
 import team.supernova.checks._
 
 import scala.collection.JavaConversions._
@@ -190,7 +190,7 @@ case class NodeHost(host: Host, opsCenterNode: Option[OpsCenterNode]) extends Or
   // TODO add opsCenter Info and warnings!
 }
 
-case class ClusterInfo(metaData: Metadata, cluster: ClusterEnv, group: String)
+case class ClusterInfo(metaData: Metadata, slowQueries: ClusterSlowQueries, cluster: ClusterEnv, group: String)
   extends Checkable with Ordered[ClusterInfo] {
 
   val cluster_name = metaData.getClusterName
