@@ -1,10 +1,11 @@
 package team.supernova
 
 import com.datastax.driver.core._
-import team.supernova.cassandra.ClusterEnv
+import team.supernova.cassandra.{ClusterEnv, OpsCenterApi}
+import team.supernova.checks._
+
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet
-import checks._
 
 /**
  * Created by Gary Stewart on 4-8-2015.
@@ -199,8 +200,7 @@ case class ClusterInfo(metaData: Metadata, cluster: ClusterEnv, group: String)
     new Keyspace(i, dataCenter)
   }).to
 
-  val opsKeyInfo: Map[String, List[String]]  = keyspaces.foldLeft(Map[String, List[String]]()){ (a,b) => a ++ Map( b.keyspace_name -> b.tables.map(_.table_name) ) }
-  val opsCenterClusterInfo: Option[OpsCenterClusterInfo] = OpsCenter.createOpsCenterClusterInfo(cluster.opscenter, cluster.ops_uname, cluster.ops_pword, cluster_name, opsKeyInfo )
+  val opsCenterClusterInfo: Option[OpsCenterClusterInfo] = new OpsCenterApi(cluster).getInfo(metaData)
   val hosts = metaData.getAllHosts.map(h => new NodeHost(h, opsCenterClusterInfo.flatMap(a => a.nodes.find(n => n.name.equals(h.getSocketAddress.getAddress.getHostAddress)))))
   // TODO add cluster checks summary  ie check DC names etc!
   // TODO implement compare keyspaces - one cluster to another
