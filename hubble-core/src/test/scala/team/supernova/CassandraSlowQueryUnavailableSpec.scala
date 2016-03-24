@@ -22,7 +22,7 @@ class CassandraSlowQueryUnavailableSpec
 
     it("should NOT find slow queries") {
       val all = ArrayBuffer[SlowQuery]()
-      new CassandraSlowQueryApi(clusterInstance).foreach(all.+=(_))
+      new CassandraSlowQueryApi(clusterInstance).foreach(None)(all.+=(_))
       all.size should be (0)
     }
   }

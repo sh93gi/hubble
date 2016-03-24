@@ -1,6 +1,7 @@
 package team.supernova.actor.collect
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import com.datastax.driver.core.exceptions.ReadTimeoutException
 import team.supernova.cassandra.{CassandraSlowQueryApi, ClusterEnv, ClusterSlowQueries}
 
 object ClusterSlowQueryActor{
@@ -14,8 +15,16 @@ object ClusterSlowQueryActor{
 class ClusterSlowQueryActor(requester: ActorRef)  extends Actor with ActorLogging {
 
   def process(cluster: ClusterEnv) = {
-    val clusterSlowQueries = new ClusterSlowQueries(Some(5))
-    new CassandraSlowQueryApi(cluster).foreach(clusterSlowQueries.add)
+    val clusterSlowQueries = new ClusterSlowQueries(Some(25))
+    var mycounter = 0
+    try{
+      new CassandraSlowQueryApi(cluster).foreach(None)(q=>{clusterSlowQueries.add(q);mycounter+=1})
+    } catch {
+      case e: ReadTimeoutException=>
+        log.error(e, s"When collecting slow queries of ${cluster.cluster_name}")
+        log.warning(s"Failed to collect all slow queries of ${cluster.cluster_name} because of a read timeout")
+    }
+    log.info(s"Collected ${clusterSlowQueries.clusterSlow.commands.size} unique slow queries for the cluster ${cluster.cluster_name}, processed $mycounter.")
     clusterSlowQueries
   }
 

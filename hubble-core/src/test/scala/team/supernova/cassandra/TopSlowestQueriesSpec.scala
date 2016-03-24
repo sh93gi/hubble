@@ -32,6 +32,20 @@ class TopSlowestQueriesSpec
       some1.foreach(selector.add)
       selector.commands.size should be <= 20
     }
+
+    it("when more requested, should not return more queries than the global limit"){
+      val some1 = (1 to 30).map(i => new SlowQuery(List("test"+i), Set(), Set(), i*100))
+      val selector = new TopSlowestQueries(Some(10))
+      some1.foreach(selector.add)
+      selector.get(30) should have size 10
+    }
+
+    it("when everything is requested, should not return more queries than the global limit"){
+      val some1 = (1 to 30).map(i => new SlowQuery(List("test"+i), Set(), Set(), i*100))
+      val selector = new TopSlowestQueries(Some(10))
+      some1.foreach(selector.add)
+      selector.get() should have size 10
+    }
   }
 
 }

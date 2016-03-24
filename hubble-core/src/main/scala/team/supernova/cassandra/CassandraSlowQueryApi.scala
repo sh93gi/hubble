@@ -13,7 +13,7 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
         session =>{
           try{
           val dsePerformanceCount = retryExecute(
-            {session.execute("select count(*) from  system.schema_columnfamilies where keyspace_name='dse_perf' and columnfamily_name='node_slow_log';").asScala},
+            {session.execute("select count(*) from system.schema_columnfamilies where keyspace_name='dse_perf' and columnfamily_name='node_slow_log';").asScala},
             3)
             return dsePerformanceCount.head.getLong(0)>0
           }catch{
@@ -23,13 +23,14 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
       }
     }
 
-  def foreach(op: (SlowQuery)=>Unit) : Unit = {
+  def foreach(limit: Option[Int])(op: (SlowQuery)=>Unit) : Unit = {
     if(!hasSlowQueryData()){
       return
     }
+    val limit_text = limit.map("limit %d".format(_)).getOrElse("")
     using(newSession()) { session =>
       val results = retryExecute(
-        {session.execute("select * from dse_perf.node_slow_log limit 50;").asScala},
+        {session.execute(s"select * from dse_perf.node_slow_log $limit_text;").asScala},
         3)
       results.foreach(r=>op(SlowQuery(r)))
     }
