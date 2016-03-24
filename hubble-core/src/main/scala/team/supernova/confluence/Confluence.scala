@@ -28,7 +28,7 @@ object Confluence {
 
       try {
         println(s"Checking ${tokenPage.getTitle} for page: $pageName ")
-        if (!tokenPage.getContent.toString.contains(contentMD5)) {
+        if (!tokenPage.getContent.contains(contentMD5)) {
           println(s"Updating: $pageName")
           val existingPage: RemotePage = pageObject.read(project, pageName)
           existingPage.setContent(content)
@@ -39,7 +39,7 @@ object Confluence {
         }
       }
       catch {
-        case e: Exception => {
+        case e: Exception =>
           val newPage: RemotePage = new RemotePage
           newPage.setContent(content)
           newPage.setTitle(pageName)
@@ -47,12 +47,26 @@ object Confluence {
           newPage.setSpace(parentPage.getSpace)
           pageObject.store(newPage)
           println(s"$pageName created!")
-        }
       }
 
 
     //return the token
     contentMD5
+  }
+
+  //https://confluence.atlassian.com/doc/expand-macro-223222352.html
+  //DONT AUTO-FORMAT THIS OTHERWISE IT WILL FAIL ON CONFLUENCE!!!
+  def confluenceExpandBlock(title: String, content: String): NodeSeq = {
+    if (content.trim.isEmpty) {
+      NodeSeq.Empty
+    } else {
+      <ac:structured-macro ac:name="expand">
+        <ac:parameter ac:name="title">{title}</ac:parameter>
+        <ac:rich-text-body>
+          {scala.xml.Unparsed(content)}
+        </ac:rich-text-body>
+      </ac:structured-macro>
+    }
   }
 
   //https://confluence.atlassian.com/display/DOC/Code+Block+Macro
