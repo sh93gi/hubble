@@ -67,8 +67,8 @@ case class Column(columnMetadata: ColumnMetadata, keyType: String) extends Check
     List(
       Check("Secondary Index exists", s"$index_name index on table $table_name.$column_name!", index_name == "", "warning"),
       Check("ColumnName begin letter", s"$table_name.$column_name is not beginning with a letter.", StringValidation.startsWithLetter(column_name), "warning"),
-      Check("ColumnName length check", s"Column name $table_name.$column_name is too long", StringValidation.isNotTooLong(column_name), "error"),
-      Check("ColumnName length warning", s"Column name $table_name.$column_name is a bit long", StringValidation.isNotABitLong(column_name), "warning"),
+      Check("ColumnName length check", s"Column name $table_name.$column_name is too long", StringValidation.isNotTooLong(column_name), "warning"),
+      Check("ColumnName length warning", s"Column name $table_name.$column_name is a bit long", StringValidation.isNotABitLong(column_name), "info"),
       Check("ColumnName check", s"Column name $table_name.$column_name is not according to the naming conventions", StringValidation.isAlphaNumericLowercase(column_name), "warning")
     )
   }
@@ -120,8 +120,8 @@ case class Table(tableMetadata: TableMetadata) extends Checkable  with Ordered [
   val myChecks: List[Check] = List(
     Check("Single column table", s"$table_name only has one column!", columns.size != 1, "warning"),
     Check("TableName begin letter", s"$table_name is not beginning with a letter.", StringValidation.startsWithLetter(table_name), "warning"),
-    Check("TableName length check", s"Table name ${table_name} is too long", StringValidation.isNotTooLong(table_name), "error"),
-    Check("TableName length warning", s"Table name ${table_name} is a bit long", StringValidation.isNotABitLong(table_name), "warning"),
+    Check("TableName length check", s"Table name ${table_name} is too long", StringValidation.isNotTooLong(table_name), "warning"),
+    Check("TableName length warning", s"Table name ${table_name} is a bit long", StringValidation.isNotABitLong(table_name), "info"),
     Check("TableName check", s"Table name ${table_name} is not according to the naming conventions", StringValidation.isAlphaNumericLowercase(table_name), "warning")
   )
 
@@ -171,8 +171,8 @@ case class Keyspace(  keyspaceMetaData: KeyspaceMetadata,
     Check("CassandraErrors table check", s"$keyspace_name contains CassandraErrors table. This is not mandatory anymore.", ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("cassandraerrors")) == 1, "info"),
     Check("ModelMutation table check", s"$keyspace_name has no ModelMutation table. Are you using Nolio for setting your cassandra data model?", ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("modelmutation")) != 0, "info"),
     Check("Data Center names check", s"$keyspace_name has incorrect DC names:${dcNames}", validDCnames ++ dataCenter == validDCnames, "error"),
-    Check("KeyspaceName length check", s"Keyspace name ${keyspace_name} is too long", StringValidation.isNotTooLong(keyspace_name), "error"),
-    Check("KeyspaceName length warning", s"Keyspace name ${keyspace_name} is a bit long", StringValidation.isNotABitLong(keyspace_name), "warning"),
+    Check("KeyspaceName length check", s"Keyspace name ${keyspace_name} is too long", StringValidation.isNotTooLong(keyspace_name), "warning"),
+    Check("KeyspaceName length warning", s"Keyspace name ${keyspace_name} is a bit long", StringValidation.isNotABitLong(keyspace_name), "info"),
     Check("KeyspaceName check", s"Keyspace name ${keyspace_name} is not according to the naming conventions", StringValidation.isAlphaNumericLowercase(keyspace_name), "warning")
   )
   val children = tables
