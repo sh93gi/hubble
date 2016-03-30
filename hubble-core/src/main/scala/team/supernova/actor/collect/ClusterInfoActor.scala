@@ -31,22 +31,33 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
       metaActor ! ClusterMetadataActor.StartWorkOnCluster(cluster, group)
       slowqueryActor ! ClusterSlowQueryActor.StartWorkOnCluster(cluster, group)
 
-    case ClusterMetadataActor.Finished(resultSet, cluster, group) =>
-      metaResult.+=( ((cluster.cluster_name, group), resultSet))
-      log.info("Received cluster metadata")
+    case ClusterMetadataActor.Finished(metadata, cluster, group) =>
+      metaResult.+=( ((cluster.cluster_name, group), metadata))
+      log.info(s"Received cluster metadata of $group 's ${cluster.cluster_name}")
       collectResults(cluster, group)
 
-    case ClusterSlowQueryActor.Finished(resultSet, cluster, group) =>
-      slowQueryResult.+=( ((cluster.cluster_name, group), resultSet))
-      log.info("Received cluster slow query data")
+    case ClusterSlowQueryActor.Finished(slowQueries, cluster, group) =>
+      slowQueryResult.+=( ((cluster.cluster_name, group), slowQueries))
+      log.info(s"Received cluster slow query data of $group 's ${cluster.cluster_name}")
       collectResults(cluster, group)
   }
 
   def collectResults(cluster: ClusterEnv, group: String): Unit ={
     val metaElement = metaResult.get((cluster.cluster_name, group))
+    if (!metaElement.isDefined)
+      log.info(s"Still waiting for metadata of $group 's ${cluster.cluster_name}")
+
     val slowQueryElement = slowQueryResult.get((cluster.cluster_name, group))
+    if (!slowQueryElement.isDefined)
+      log.info(s"Still waiting for slow query data of $group 's ${cluster.cluster_name}")
+
     if (metaElement.isDefined && slowQueryElement.isDefined){
-      requester ! ClusterInfoActor.WorkOnClusterFinished(new ClusterInfo(metaElement.get, slowQueryElement.get, cluster, group))
+      log.info(s"All work finished on $group 's ${cluster.cluster_name}")
+      val result = new ClusterInfo(
+        metaElement.get,
+        slowQueryElement.get,
+        cluster, group)
+      requester ! ClusterInfoActor.WorkOnClusterFinished(result)
     }
   }
 }
