@@ -1,7 +1,7 @@
 package team.supernova
 
 import com.datastax.driver.core._
-import team.supernova.cassandra.{ClusterEnv, ClusterSlowQueries, OpsCenterApi}
+import team.supernova.cassandra.{ClusterEnv, ClusterSlowQueries}
 import team.supernova.checks._
 
 import scala.collection.JavaConversions._
@@ -62,10 +62,15 @@ case class Column(columnMetadata: ColumnMetadata, keyType: String) extends Check
   } else {
     ""
   }
+  def is_custom_index(): Boolean ={
+    val index = columnMetadata.getIndex
+    index != null &&
+      (index.getIndexClassName== null || !index.getIndexClassName.startsWith("com.datastax.bdp.search.solr."))
+  }
 
   val myChecks: List[Check] = {
     List(
-      Check("Secondary Index exists", s"$index_name index on table $table_name.$column_name!", index_name == "", "warning"),
+      Check("Secondary Index exists", s"$index_name index on table $table_name.$column_name!", !is_custom_index(), "warning"),
       Check("ColumnName begin letter", s"$table_name.$column_name is not beginning with a letter.", StringValidation.startsWithLetter(column_name), "warning"),
       Check("ColumnName length check", s"Column name $table_name.$column_name is too long", StringValidation.isNotTooLong(column_name), "warning"),
       Check("ColumnName length warning", s"Column name $table_name.$column_name is a bit long", StringValidation.isNotABitLong(column_name), "info"),
