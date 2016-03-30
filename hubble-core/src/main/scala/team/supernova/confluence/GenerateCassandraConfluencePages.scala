@@ -3,7 +3,7 @@ package team.supernova.confluence
 import java.util.Calendar
 
 import team.supernova._
-import team.supernova.cassandra.SlowQuery
+import team.supernova.cassandra.{ClusterSlowQueries, SlowQuery}
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
 import team.supernova.graphite.StringTemplate
@@ -111,6 +111,19 @@ object GenerateCassandraConfluencePages {
     </body>.toString()
   }
 
+  def slowQueryFailures(clusterSlowQueries: ClusterSlowQueries) : NodeSeq = {
+    if (clusterSlowQueries.unauthorized.isEmpty &&
+      clusterSlowQueries.failed.isEmpty)
+      return NodeSeq.Empty
+    Confluence.confluenceExpandBlock("Slow query retrieval failures",
+        <p>
+        {scala.xml.Unparsed(
+          clusterSlowQueries.unauthorized.map(e=>e.getMessage).map(scala.xml.Text(_)).mkString("<br/>") +
+          clusterSlowQueries.failed.map(e=>e.getMessage).map(scala.xml.Text(_)).mkString("<br/>"))}
+          </p>
+        )
+  }
+
   def slowQueryTable (queries: List[SlowQuery]) : NodeSeq = {
     Confluence.confluenceExpandBlock(s"Top ${queries.size} Slow queries",
           <table>
@@ -118,14 +131,14 @@ object GenerateCassandraConfluencePages {
               {scala.xml.Unparsed( queries.foldLeft("") { (txt, slowQuery) => txt +
               <tr>
                 <td>{slowQuery.duration}</td>
-                <td>{slowQuery.commands.mkString("<br/>")}</td>
+                <td>{slowQuery.commands.map(scala.xml.Text(_)).mkString("<br/>")}</td>
                 <td>{slowQuery.keyspaces.mkString("<br/>")}</td>
                 <td>{slowQuery.tables.mkString("<br/>")}</td>
               </tr>
             })
               }
             </tbody>
-          </table>.toString())
+          </table>)
   }
 
   def generateClusterSummaryPage(project: String, clusterInfo: ClusterInfo): String= {
@@ -205,7 +218,12 @@ object GenerateCassandraConfluencePages {
           { Confluence.confluenceCodeBlock("Warnings", clusterWarnings ,"none")}
         </p>
           <p><a href="{clusterGraphUrl}"><img src={ clusterGraphUrl }/></a></p>
-        <p>{slowQueryTable(clusterInfo.slowQueries.clusterSlow.get(10))}</p>
+        <p>{
+          val slowToShow = clusterInfo.slowQueries.clusterSlow.get(10)
+            if (slowToShow.isEmpty)
+              ""
+                else slowQueryTable(clusterInfo.slowQueries.clusterSlow.get(10))}</p>
+        <p>{slowQueryFailures(clusterInfo.slowQueries)}</p>
         <h1>Host Information</h1>
         <p>
           <table>

@@ -23,7 +23,6 @@ class ClusterInfoWorkerBatch(requester: ActorRef)  extends ClusterWorkerBatch[Cl
       runOnAll(cluster)
 
     case ClusterInfoActor.WorkOnClusterFinished(clusterResult: ClusterInfo) =>
-      log.info(s"Message received from worker = $counter")
       received(clusterResult)
   }
 

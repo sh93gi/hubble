@@ -56,14 +56,14 @@ object Confluence {
 
   //https://confluence.atlassian.com/doc/expand-macro-223222352.html
   //DONT AUTO-FORMAT THIS OTHERWISE IT WILL FAIL ON CONFLUENCE!!!
-  def confluenceExpandBlock(title: String, content: String): NodeSeq = {
-    if (content.trim.isEmpty) {
+  def confluenceExpandBlock(title: String, content: NodeSeq): NodeSeq = {
+    if (content.toString().trim.isEmpty || content.isEmpty) {
       NodeSeq.Empty
     } else {
       <ac:structured-macro ac:name="expand">
         <ac:parameter ac:name="title">{title}</ac:parameter>
         <ac:rich-text-body>
-          {scala.xml.Unparsed(content)}
+          {content}
         </ac:rich-text-body>
       </ac:structured-macro>
     }

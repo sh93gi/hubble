@@ -38,7 +38,7 @@ trait ClusterWorkerBatch[T] extends Actor with ActorLogging {
   def processClusterInfoPerRow(clusterEnv: ClusterEnv, clusterGroup: String) = {
     // ask for new cluster info
     counter += 1
-    log.info(s"Querying cassandra - " + clusterEnv.cluster_name)
+    log.info(s"Sending message to worker $counter - " + clusterEnv.cluster_name)
     clusterWorkers ! message(clusterEnv, clusterGroup)
   }
 
@@ -48,6 +48,7 @@ trait ClusterWorkerBatch[T] extends Actor with ActorLogging {
     * @param clusterResult the single result element received from one of the workers
     */
   def received(clusterResult: T): Unit = {
+    log.info(s"Message received from worker = $counter")
     counter -= 1
     clusterResults += clusterResult
     if (counter == 0)
