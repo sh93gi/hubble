@@ -44,13 +44,14 @@ object GenerateCassandraConfluencePages {
       </ac:rich-text-body>
     </ac:structured-macro>
 
+
   def generateKeyspacePage(keyspace: Keyspace, clusterInfo: ClusterInfo): String= {
 
     def generateTablePart (table: Table, k: Keyspace): String = {
       val size = table.columns.size.toString
       val possibleLinks = k.findPossibleLinks.filter(l => l.from.table_name.equals(table.table_name)).foldLeft(""){(a,p) => a + p.to.table_name + " on (" + p.on +")\n" }
       val queries = table.statements.foldLeft(""){(a,s) => a + s + "\n" }
-      val tableWarnings = table.checks.filter(!_.hasPassed).foldLeft(""){(a,w) => a + w.details + "\n" }
+      val tableWarnings = table.checks.filter(!_.hasPassed).map(_.details).sorted.mkString("\n")
 
       def whichColourClass(keyType: String): String = keyType match  {
         case "partition_key" => "highlight-green confluenceTd"
@@ -88,8 +89,8 @@ object GenerateCassandraConfluencePages {
       firstRow + restRows
     }
 
-    val keyspaceWarnings = keyspace.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("warning")).foldLeft(""){(a,w) => a + w.details + "\n" }
-    val keyspaceErrors = keyspace.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("error")).foldLeft(""){(a,w) => a + w.details + "\n" }
+    val keyspaceWarnings = keyspace.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.WARNING)).map(_.details).sorted.mkString("\n")
+    val keyspaceErrors = keyspace.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.ERROR)).map(_.details).sorted.mkString("\n")
 
     //The actual page itself
     //need <body> tag otherwise ArrayBuilder is shown on confluence
@@ -145,7 +146,7 @@ object GenerateCassandraConfluencePages {
 
     def keyspaceInfoRows (clusterInfo: ClusterInfo): String = {
       val rows = clusterInfo.keyspaces.foldLeft(""){(a,k) =>
-        val warnings = k.checks.filter(!_.hasPassed).foldLeft(""){(a,w) => a + w.details + "\n" }
+        val warnings = k.checks.filter(!_.hasPassed).map(_.details).sorted.mkString("\n")
 
         val href = s"/display/$project/${clusterInfo.cluster_name.replace(" ","+")}+-+${k.keyspace_name}"
           a +
@@ -201,8 +202,8 @@ object GenerateCassandraConfluencePages {
       }
     }
 
-    val clusterWarnings = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("warning")).foldLeft(""){(a,w) => a + w.details + "\n" }
-    val clusterErrors = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("error")).foldLeft(""){(a,w) => a + w.details + "\n" }
+    val clusterWarnings = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.WARNING)).map(_.details).sorted.mkString("\n")
+    val clusterErrors = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.ERROR)).map(_.details).sorted.mkString("\n")
     val clusterGraphUrl = new StringTemplate(clusterInfo.cluster.graphite_template).fillWith(clusterInfo.cluster.graphite)
 
     import org.json4s._
@@ -285,16 +286,16 @@ object GenerateCassandraConfluencePages {
         <table>
           <tbody><tr><th>Cluster Name</th><th>Metrics</th><th>Total Errors</th><th>Total Warnings</th><th>Extras</th><th>Last Checked</th></tr>
             {scala.xml.Unparsed( groupClusters.clusterInfoList.foldLeft("") { (at, clus) =>
-            val warnings = clus.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("warning"))
-            val errors = clus.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("error"))
+            val warnings = clus.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.WARNING))
+            val errors = clus.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.ERROR))
             at +
             <tr>
               <td><a href={s"/display/$project/${clus.cluster_name.replace(" ","+")}"}>{clus.cluster_name}</a></td>
               <td>{clusterGraphite(clus.cluster_name, clus.cluster.graphana)}</td>
               <td>{errors.size}</td>
               <td>{warnings.size}</td>
-              <td>{ Confluence.confluenceCodeBlock("Error", errors.foldLeft(""){(a,w) => a + w.details + "\n" } ,"none")}
-                { Confluence.confluenceCodeBlock("Warnings", warnings.foldLeft(""){(a,w) => a + w.details + "\n" } ,"none")}
+              <td>{ Confluence.confluenceCodeBlock("Error", errors.map(_.details).sorted.mkString("\n"), "none")}
+                { Confluence.confluenceCodeBlock("Warnings", warnings.map(_.details).sorted.mkString("\n"), "none")}
               </td>
               <td>{ Calendar.getInstance.getTime} </td>
             </tr>
