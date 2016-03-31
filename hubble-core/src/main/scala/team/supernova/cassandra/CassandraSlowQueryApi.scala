@@ -1,11 +1,15 @@
 package team.supernova.cassandra
 
+import com.datastax.driver.core.exceptions.ReadTimeoutException
 import com.sun.mail.iap.ConnectionException
+import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 import team.supernova.{retryExecute, using}
 
 import scala.collection.JavaConverters._
 
 class CassandraSlowQueryApi(cluster: ClusterEnv) {
+  val log =LoggerFactory.getLogger(classOf[CassandraSlowQueryApi])
   def newSession() = new ClusterEnvConnector(cluster).connect()
 
     def hasSlowQueryData(): Boolean = {
@@ -28,11 +32,38 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
       return
     }
     val limit_text = limit.map("limit %d".format(_)).getOrElse("")
+    var count = 0
     using(newSession()) { session =>
-      val results = retryExecute(
-        {session.execute(s"select * from dse_perf.node_slow_log $limit_text;").asScala},
-        3)
-      results.foreach(r=>op(SlowQuery(r)))
+      if (limit.isDefined && count>=limit.get)
+        return
+      val nodes = session.execute("select peer from system.peers;").all().asScala.map(_.getInet("peer"))
+      var failed : Option[Throwable] = None
+      for (offset <- 0 to 7){
+        val dateString = CassandraDateTime.toDate(new DateTime().minusDays(offset))
+        for (node_ip <- nodes){
+          log.info(s"Getting slow queries for node $node_ip and date $dateString")
+          if (limit.isDefined && count>=limit.get)
+            return //We are done, no more nodes/days to try
+          val where_text = s" WHERE node_ip='${node_ip.getHostAddress}' AND date='$dateString'"
+          val query = s"select * from dse_perf.node_slow_log $where_text $limit_text;"
+          try{
+            // Could timeout on retrieving the first page
+            val results = retryExecute(
+              {session.execute(query).asScala},
+              3)
+            // Foreach can time out on getting the next page
+            results.foreach(r=>{
+              count+=1
+              if (limit.isEmpty || count<=limit.get)
+                op(SlowQuery(r))
+            })
+          }catch {
+            case e:ReadTimeoutException => failed=Some(e)
+          }
+        }
+      }
+      // After all requested days for all available nodes, throw exception if not all data could be retrieved
+      failed.foreach(throw _) //Rethrow exception if at least one occurred
     }
   }
 }

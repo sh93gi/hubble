@@ -32,7 +32,7 @@ class ClusterSlowQueryActor(requester: ActorRef)  extends Actor with ActorLoggin
       case e: UnauthorizedException=>
         log.error(e, s"When collecting slow queries of ${cluster.cluster_name}")
         clusterSlowQueries.failed(e)
-      case e=>
+      case e: Throwable=>
         log.error(e, s"When collecting slow queries of ${cluster.cluster_name}")
         clusterSlowQueries.failed(e)
     }
