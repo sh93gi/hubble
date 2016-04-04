@@ -1,5 +1,7 @@
 package team.supernova.cassandra
 
+import java.net.InetAddress
+
 import com.datastax.driver.core.exceptions.ReadTimeoutException
 import com.sun.mail.iap.ConnectionException
 import org.joda.time.DateTime
@@ -39,17 +41,21 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
       val nodes = session.execute("select peer from system.peers;").all().asScala.map(_.getInet("peer"))
       var failed : Option[Throwable] = None
       for (offset <- 0 to 7){
-        val dateString = CassandraDateTime.toDate(new DateTime().minusDays(offset))
+        val midnight = CassandraDateTime.toMidnight(new DateTime().minusDays(offset)).toDate
         for (node_ip <- nodes){
-          log.info(s"Getting slow queries for node $node_ip and date $dateString")
+          log.info(s"Getting slow queries for node $node_ip and date $midnight")
+          val node_inet = InetAddress.getByName(node_ip.getHostAddress)
           if (limit.isDefined && count>=limit.get)
             return //We are done, no more nodes/days to try
-          val where_text = s" WHERE node_ip='${node_ip.getHostAddress}' AND date='$dateString'"
-          val query = s"select * from dse_perf.node_slow_log $where_text $limit_text;"
+          val query = session.prepare(s"select commands, table_names, duration from dse_perf.node_slow_log " +
+            s"WHERE node_ip=? " +
+            s"AND date=? " +
+            s"$limit_text;")
+          val statement = query.bind(node_inet, midnight)
           try{
             // Could timeout on retrieving the first page
             val results = retryExecute(
-              {session.execute(query).asScala},
+              {session.execute(statement).asScala},
               3)
             // Foreach can time out on getting the next page
             results.foreach(r=>{

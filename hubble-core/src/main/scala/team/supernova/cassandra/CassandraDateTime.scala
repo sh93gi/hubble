@@ -1,6 +1,5 @@
 package team.supernova.cassandra
 
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone, LocalDateTime}
 
 object CassandraDateTime {
@@ -16,13 +15,14 @@ object CassandraDateTime {
     * @param currentTimeZone the timezone applicable to the DateTime
     * @return a string
     */
-  def toDate(datetime: DateTime, currentTimeZone: DateTimeZone = DateTimeZone.getDefault):String = {
+  def toMidnight(datetime: DateTime, currentTimeZone: DateTimeZone = DateTimeZone.getDefault):DateTime = {
     val tz =DateTimeZone.getDefault // Needs to be the zone our servers use, could also specify explicit "Europe/Berlin"
     val cassandra_date = new LocalDateTime(datetime.getMillis)
         .toDateTime(currentTimeZone)
         .toDateTime(DateTimeZone.UTC)
         .withTimeAtStartOfDay()
-    val fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ssZ")
-    fmt.print(cassandra_date)
+    //val fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ssZ")
+    //fmt.print(cassandra_date)
+    cassandra_date
   }
 }
