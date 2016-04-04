@@ -2,11 +2,10 @@ package team.supernova.confluence
 
 import java.util.Calendar
 
-import com.datastax.driver.core.{Session}
+import team.supernova._
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
-import team.supernova._
-import team.supernova.graphite.GraphiteApi
+import team.supernova.graphite.StringTemplate
 
 import scala.collection.SortedSet
 /**
@@ -167,7 +166,7 @@ object GenerateCassandraConfluencePages {
 
     val clusterWarnings = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("warning")).foldLeft(""){(a,w) => a + w.details + "\n" }
     val clusterErrors = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals("error")).foldLeft(""){(a,w) => a + w.details + "\n" }
-    val clusterGraphUrl = new GraphiteApi(clusterInfo.cluster.graphite).clusterGraphUrl(clusterInfo.cluster_name)
+    val clusterGraphUrl = new StringTemplate(clusterInfo.cluster.graphite_template).fillWith(clusterInfo.cluster.graphite)
 
     import org.json4s._
     import org.json4s.jackson.JsonMethods._
@@ -224,7 +223,7 @@ object GenerateCassandraConfluencePages {
 
   //TODO - make graphite checker!!!  Seems to be rather messy
    //this is using graphana!
-  def clusterGraphite(cluster_name: String,graphana_host: String ) = <a href={s"http://${graphana_host}/dashboard/db/cluster-health-per-cluster?Cluster=${cluster_name}"}>Overview</a>
+  def clusterGraphite(cluster_name: String, graphana_host: String ) = <a href={s"http://${graphana_host}/dashboard/db/cluster-health-per-cluster?Cluster=${cluster_name}"}>Overview</a>
 
   def generateClusterGroupPage(groupClusters: GroupClusters, project: String): String=  {
 

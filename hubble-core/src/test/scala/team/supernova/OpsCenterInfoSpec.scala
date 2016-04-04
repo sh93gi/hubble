@@ -2,8 +2,8 @@ package team.supernova
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
+import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
-import org.scalatest.{FunSpecLike, Matchers}
 import team.supernova.cassandra.{CassandraClusterApi, ClusterEnv}
 
 
@@ -19,10 +19,8 @@ class OpsCenterInfoSpec
       val clusterInfo = new CassandraClusterApi(clusterInstance).clusterInfo("someGroup")
       val opsInfo = clusterInfo.opsCenterClusterInfo
       opsInfo should not be null
-      println(opsInfo)
-      val rows = opsInfo.get.nodes.
-        flatMap(n => n.opsKeyspaceInfoList.flatMap(k=> k.opsTableInfoList.map(t=> Tuple5(k.keyspaceName, t.tableName, n.name, t.avgDataSizeMB, t.numberSSTables ))))
-      println(rows)
+      opsInfo should not be None
+      opsInfo.get.nodes.size should be > 0
     }
 
   }

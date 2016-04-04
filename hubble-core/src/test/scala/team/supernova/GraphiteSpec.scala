@@ -6,8 +6,8 @@ import java.util.Base64
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import org.scalatest.{Matchers, FunSpecLike}
-import Matchers._
+import org.scalatest.Matchers._
+import org.scalatest.{FunSpecLike, Matchers}
 import team.supernova.cassandra.ClusterEnv
 
 class GraphiteSpec
@@ -20,22 +20,23 @@ class GraphiteSpec
 
   describe("Graphite API"){
     it ("should construct"){
-      print(clusterInstance)
-      print(clusterInstance.graphite)
-      graphiteApi() should not be null
+      withClue(s"with graphiteurl=${clusterInstance.graphite}"){
+        StringTemplate() should not be null
+      }
+    }
+  }
+
+  describe("Should read graphite template arguments as dictionary"){
+    it ("graphite arguments should be known"){
+      clusterInstance.graphite.size should be > 0
     }
   }
 
   describe("Graphite graph retriever"){
-    it  ("should generate url") {
-      val url = graphiteApi().clusterGraphUrl(clusterInstance.cluster_name)
+    it  ("should generate url with no remaining template strings") {
+      val url = StringTemplate().fillWith(clusterInstance.graphite)
       url should startWith ("http")
-      url should include (clusterInstance.graphite)
-    }
-
-    it  ("should generate url with lowercase cluster name") {
-      val url = graphiteApi().clusterGraphUrl(clusterInstance.cluster_name)
-      url should include (clusterInstance.cluster_name.toLowerCase)
+      url should not contain "${"
     }
 
     def authorizedInputStream(url: String ): InputStream ={
@@ -54,7 +55,7 @@ class GraphiteSpec
 
     it  ("should create img with data (behind http authorization)") {
       // using heuristic of reasonably sized png (4KB returned for 'no data', 32KB for 'with data')
-      val url = graphiteApi().clusterGraphUrl(clusterInstance.cluster_name)
+      val url = StringTemplate().fillWith(clusterInstance.graphite)
       import javax.imageio.ImageIO
       withClue(url){
         using(authorizedInputStream(url)) { isr => {
