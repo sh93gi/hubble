@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
-import team.supernova.cassandra.{OpsCenterApi, CassandraClusterApi, ClusterEnv}
+import team.supernova.cassandra.{CassandraClusterApi, ClusterEnv, OpsCenterApi}
 
 
 class OpsCenterInfoSpec
@@ -12,7 +12,7 @@ class OpsCenterInfoSpec
   with FunSpecLike
   with ClusterConnectorFixture
   with CassandraClusterGroupFixture {
-  val clusterInstance: ClusterEnv = cassandragroup.head.envs.head // small cluster, such that clusterinfo is fast
+  val clusterInstance: ClusterEnv = cassandragroup.last.envs.last // small cluster, such that clusterinfo is fast(er)
 
   describe("Opscenter info retriever"){
     it  ("should get info") {
