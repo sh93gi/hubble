@@ -2,9 +2,9 @@ package team.supernova
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import org.scalatest.{Matchers, FunSpecLike}
-import Matchers._
-import team.supernova.cassandra.{ClusterEnv, CassandraClusterApi}
+import org.scalatest.Matchers._
+import org.scalatest.{FunSpecLike, Matchers}
+import team.supernova.cassandra.{CassandraClusterApi, ClusterEnv}
 
 
 class CassandraClusterInfoSpec
@@ -22,8 +22,8 @@ class CassandraClusterInfoSpec
     }
 
     it ("should retrieve clusterinfo"){
-      val clusterInfo = new CassandraClusterApi(clusterInstance).clusterInfo("someGroup")
-      clusterInfo.group should be ("someGroup")
+      val metadata = new CassandraClusterApi(clusterInstance).metadata()
+      metadata.getClusterName  should be (clusterInstance.cluster_name)
     }
 
   }

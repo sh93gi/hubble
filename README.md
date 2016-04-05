@@ -1,6 +1,12 @@
 ## Hubble
 Hubble is a 'telescope' into a group of cassandra clusters to help make life easier and reducing the need to log on to the cluster thus improving security even further.   
 
+Hubble collects the following data from your cluster, and creates a Confluence tree with the results:
+
+ - Top slowest queries per cluster, keyspace and table, retrieved from dse_perf.node_slow_log if available.
+ - Adds a graphite graph at the top of your keyspace confluence page showing the keyspace usage.
+ - A summary of opscenter cluster metadata (like nr of sstables)
+ - It uses cassandra's session.getCluster().getMetadata to get most information
 
 
 ## Architecture:

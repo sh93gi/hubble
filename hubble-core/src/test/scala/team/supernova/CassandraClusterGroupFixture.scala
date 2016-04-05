@@ -4,6 +4,6 @@ import akka.actor.ActorSystem
 
 trait CassandraClusterGroupFixture {
   def system: ActorSystem
-  val cassandragroup = ClusterInfoApp.mapConfigToCassandraClusterGroup(system.settings.config)
+  val cassandragroup = HubbleApp.mapConfigToCassandraClusterGroup(system.settings.config)
 
 }
