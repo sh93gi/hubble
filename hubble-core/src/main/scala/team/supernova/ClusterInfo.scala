@@ -1,7 +1,7 @@
 package team.supernova
 
 import com.datastax.driver.core._
-import team.supernova.actor.ClusterEnv
+import team.supernova.cassandra.ClusterEnv
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet
 import checks._

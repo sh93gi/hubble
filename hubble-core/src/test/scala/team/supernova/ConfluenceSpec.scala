@@ -1,27 +1,20 @@
 package team.supernova
 
-import akka.actor.{Actor, Props, ActorSystem}
+import akka.actor.ActorSystem
 import akka.testkit._
-
 import org.scalatest._
-import team.supernova.actor.{ConfluencePage, ClusterInfoController}
+import team.supernova.confluence.ConfluenceToken
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
-import team.supernova.confluence.{GenerateCassandraConfluencePages, ConfluenceToken}
 
 /**
  * Created by Gary Stewart on 4-8-2015.
  *
  */
-class ClusterInfoSpec  extends TestKit(ActorSystem("ClusterInfoSpec"))
-//with DefaultTimeout with ImplicitSender
-with FunSpecLike //with Matchers with BeforeAndAfterAll
-with TestCassandraCluster {
-
-  val TOKEN = ConfluenceToken.getConfluenceToken(system.settings.config)
-  val SPACE = system.settings.config.getString("hubble.confluence.space")
-
-
+class ConfluenceSpec
+  extends TestKit(ActorSystem("ConfluenceSpec"))
+  with FunSpecLike
+  with ConfluenceFixture {
 //  it  ("Pretty Print ClusterInfo") {
 //   // val cluster = ClusterInfo.createClusterInfo(session, GROUP)
 //    //TODO fix me

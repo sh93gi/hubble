@@ -2,8 +2,8 @@ package team.supernova.actor
 
 import akka.actor.{ActorRef, Actor, ActorLogging, Props}
 import akka.routing.RoundRobinPool
-import com.datastax.driver.core._
-import team.supernova.{ClusterInfo, GroupClusters}
+import team.supernova.cassandra.ClusterEnv
+import team.supernova.ClusterInfo
 
 import scala.collection.SortedSet
 
@@ -19,7 +19,7 @@ object ClusterInfoController {
 }
 
 case class CassandraClusterGroup(name: String, envs: List[ClusterEnv])
-case class ClusterEnv( cluster_name: String, graphana: String, graphite: String, hosts: Array[String], ops_pword: String, ops_uname: String, opscenter: String, port: Int, pword: String, uname: String, sequence: Int)
+
 
 class ClusterInfoController(requester: ActorRef) extends Actor with ActorLogging  {
 

@@ -7,7 +7,9 @@ hubble {
               {
                 cluster_name = the actual cluster name that cassandra cluster defines itself by. These Clusters are the DTAP for certain group (ex. "CLUSTER_1_DEV")
                 graphana = the host name of graphana. format is "serverHostname:port"
-                graphite = the host name of graphana. format is "serverHostname"
+                graphite = { dictionary of template arguments for hubble.graphite.url_template string
+                    key: value style definition of template arguments
+                }
                 hosts = [
                   hosts list for connecting to Cassandra (e.g. "hostname1,hostname2")
                 ]
@@ -28,5 +30,10 @@ hubble {
     password = the password used for connecting to Confluence
     endpointaddress = the url of the Confluence SOAP endpoint (e.g. "https://hostname/plugins/servlet/soap-axis1/confluenceservice-v2")
     space = the Confluence space where you want to write the pages to (e.g. "CASSANDRA")
+  }
+  graphite{
+    username = the http authentication username to use for graphite testing
+    password = the http authentication password to use for graphite testing
+    url_template = the string template in which '${key}' will be replaced by value's defined in the hubble.cassandra.clusters.graphite dictionary
   }
 }
