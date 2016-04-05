@@ -190,7 +190,10 @@ case class NodeHost(host: Host, opsCenterNode: Option[OpsCenterNode]) extends Or
   // TODO add opsCenter Info and warnings!
 }
 
-case class ClusterInfo(metaData: Metadata, slowQueries: ClusterSlowQueries, cluster: ClusterEnv, group: String)
+case class ClusterInfo(val metaData: Metadata,
+                       val slowQueries: ClusterSlowQueries,
+                       val opsCenterClusterInfo: Option[OpsCenterClusterInfo],
+                       cluster: ClusterEnv, group: String)
   extends Checkable with Ordered[ClusterInfo] {
 
   val cluster_name = metaData.getClusterName
@@ -200,7 +203,6 @@ case class ClusterInfo(metaData: Metadata, slowQueries: ClusterSlowQueries, clus
     new Keyspace(i, dataCenter)
   }).to
 
-  val opsCenterClusterInfo: Option[OpsCenterClusterInfo] = new OpsCenterApi(cluster).getInfo(metaData)
   val hosts = metaData.getAllHosts.map(h => new NodeHost(h, opsCenterClusterInfo.flatMap(a => a.nodes.find(n => n.name.equals(h.getSocketAddress.getAddress.getHostAddress)))))
   // TODO add cluster checks summary  ie check DC names etc!
   // TODO implement compare keyspaces - one cluster to another
