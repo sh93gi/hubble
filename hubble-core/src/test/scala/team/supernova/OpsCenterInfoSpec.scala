@@ -23,5 +23,12 @@ class OpsCenterInfoSpec
       opsInfo.get.nodes.size should be > 0
     }
 
+    ignore ("should have nonzero sstables"){
+      val metadata = new CassandraClusterApi(clusterInstance).metadata()
+      val opsInfo = new OpsCenterApi(clusterInstance).getInfo(metadata)
+      opsInfo.get.nodes.size should be > 0
+      opsInfo.get.nodes.head.opsKeyspaceInfoList.head.opsTableInfoList.head.numberSSTables should be > 0L
+    }
+
   }
 }
