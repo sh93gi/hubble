@@ -1,8 +1,7 @@
-package team.supernova
+package team.supernova.graphite
 
 import akka.actor.ActorSystem
 import team.supernova.cassandra.ClusterEnv
-import team.supernova.graphite.StringTemplate
 
 trait GraphiteFixture {
   def system: ActorSystem

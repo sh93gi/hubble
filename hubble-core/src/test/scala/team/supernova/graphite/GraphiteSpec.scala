@@ -1,4 +1,4 @@
-package team.supernova
+package team.supernova.graphite
 
 import java.io.InputStream
 import java.net.URL
@@ -6,8 +6,9 @@ import java.util.Base64
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
+import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
-import org.scalatest.{FunSpecLike, Matchers}
+import team.supernova._
 import team.supernova.cassandra.ClusterEnv
 
 class GraphiteSpec
