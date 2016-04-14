@@ -22,11 +22,11 @@ class HubbleActor(sSpace: String, token: Token, systemValue: ActorSystem) extend
 
   override def receive: Receive = {
     case HubbleActor.Start(clusterGroups) => {
-      log.info("START: generate Confluence pages")
+      log.info(s"START: Start collection cluster info about ${clusterGroups.map(_.name).mkString(",")}")
       clusterInfo ! ClusterInfoWorkerBatch.StartWorkOnAllClusterGroups(clusterGroups)
     }
     case ClusterInfoWorkerBatch.Finished(allClustersInfo) => {
-      log.info(s"All ClusterInfo retrieved for group: $clusterInfo")
+      log.info(s"All ClusterInfo retrieved, start to generate Confluence pages for ${allClustersInfo.map(_.cluster_name).mkString(",")}")
       pages ! ConfluencePage.GenerateAll(allClustersInfo)
     }
     case ConfluencePage.Done => {

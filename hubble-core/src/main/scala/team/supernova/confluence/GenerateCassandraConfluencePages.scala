@@ -68,7 +68,7 @@ object GenerateCassandraConfluencePages {
       //first row is needed due to rowSpan setting (see th element in table header)
       val firstRow =
         <tr>
-          <td rowspan={size}>{table.table_name}{ Confluence.confluenceCodeBlock("Warnings",tableWarnings,"none")}</td>
+          <td rowspan={size}>{table.table_name}</td>
           <td class={whichColourClass(table.columns.head.keyType)}>{ table.columns.head.column_name }{whichkeyType(table.columns.head.keyType)}</td>
           <td class={whichColourClass(table.columns.head.keyType)}>{ table.columns.head.dataTypeLong}</td>
           <td rowspan={size}>
@@ -76,6 +76,7 @@ object GenerateCassandraConfluencePages {
             { Confluence.confluenceCodeBlock("Queries",queries,"sql")}
             { Confluence.confluenceCodeBlock("References",possibleLinks,"none")}
             { Confluence.confluenceCodeBlock("Comments",table.comments,"none")}
+            { Confluence.confluenceCodeBlock("Warnings",tableWarnings,"none")}
             { clusterInfo.slowQueries.tableSlow.get(s"${keyspace.keyspace_name}.${table.table_name}").map(topSlowest => slowQueryTable(topSlowest.get(10))).getOrElse("")}
           </td>
         </tr>
