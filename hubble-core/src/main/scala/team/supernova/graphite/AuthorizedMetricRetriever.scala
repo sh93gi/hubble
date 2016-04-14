@@ -6,6 +6,15 @@ import java.util.Base64
 
 import org.slf4j.LoggerFactory
 import team.supernova._
+import team.supernova.cassandra.ClusterEnv
+
+object AuthorizedMetricRetriever{
+  def retrieveAll(cluster: ClusterEnv)={
+    cluster.graphiteConfig.graphite_metrics.map(metric =>
+      (metric.name, new AuthorizedMetricRetriever(metric.url_template, metric.func, cluster.graphiteConfig.graphite_uname, cluster.graphiteConfig.graphite_pword)))
+      .map(a => (a._1, a._2.retrieve(cluster.graphite)))
+  }
+}
 
 class AuthorizedMetricRetriever(url_template: String, func: Option[String], graphiteUserName: String, graphitePassword: String) {
   val log = LoggerFactory.getLogger(classOf[AuthorizedMetricRetriever])

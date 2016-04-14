@@ -38,12 +38,11 @@ object HubbleApp extends App {
   }
 
 
-  def mapConfigToClusterEnv(graphite_url: String, graphite_metrics: List[GraphiteMetric], pr: Config): ClusterEnv = {
+  def mapConfigToClusterEnv(graphiteConfig: GraphiteConfig, pr: Config): ClusterEnv = {
     new ClusterEnv(pr.getString("cluster_name"),
       pr.getString("graphana"),
-      graphite_url,
+      graphiteConfig,
       toMap(pr.getObject("graphite")),
-      graphite_metrics,
       pr.getStringList("hosts").map(_.toString).toArray, pr.getString("ops_pword"), pr.getString("ops_uname"), pr.getString("opscenter"),
       pr.getInt("port"), pr.getString("pword"), pr.getString("uname"), pr.getInt("sequence"))
   }
@@ -54,12 +53,21 @@ object HubbleApp extends App {
       {if (!cf.hasPath("func")) None else Some(cf.getString("func"))})
   }
 
-  def mapConfigToCassandraClusterGroup(config: Config): List[CassandraClusterGroup] = {
+  case class GraphiteConfig(graphite_template: String, graphite_metrics: List[GraphiteMetric], graphite_uname: String, graphite_pword: String)
+
+  def mapConfigToGraphite(config: Config): GraphiteConfig = {
     val graphite_url=config.getString("hubble.graphite.url_template")
+    val graphite_uname=config.getString("hubble.graphite.username")
+    val graphite_pword=config.getString("hubble.graphite.password")
     val graphite_metrics = config.getConfigList("hubble.graphite.metrics").map(toMetric).toList
+    GraphiteConfig(graphite_url, graphite_metrics, graphite_uname, graphite_pword)
+  }
+
+  def mapConfigToCassandraClusterGroup(config: Config): List[CassandraClusterGroup] = {
+    val graphite = mapConfigToGraphite(config)
     config.getConfigList("hubble.cassandra.clusters")
       .map({ p: Config => new CassandraClusterGroup(p.getString("name"), p.getConfigList("envs")
-        .map(c=>mapConfigToClusterEnv(graphite_url, graphite_metrics, c)).toList)
+        .map(cf=>mapConfigToClusterEnv(graphite, cf)).toList)
     }).toList
   }
 }

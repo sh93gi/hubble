@@ -204,6 +204,7 @@ case class NodeHost(host: Host, opsCenterNode: Option[OpsCenterNode]) extends Or
 case class ClusterInfo(val metaData: Metadata,
                        val slowQueries: ClusterSlowQueries,
                        val opsCenterClusterInfo: Option[OpsCenterClusterInfo],
+                       val metrics: List[(String, Option[Double])],
                        cluster: ClusterEnv, group: String)
   extends Checkable with Ordered[ClusterInfo] {
 
