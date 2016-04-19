@@ -77,8 +77,8 @@ object OpsCenter {
       val k = keyspaceName._2.foldLeft(List[OpsTableInfo]()) { (c,tableName) =>
 
         c ++ List(OpsTableInfo(tableName,
-          Math.round(getMetricTable(login, host, uname, pword, clusterName, node, keyspaceName._1, tableName, "cf-total-disk-used") / 1048576),
-          getMetricTable(login, host, uname, pword, clusterName, node, keyspaceName._1, tableName, "cf-live-sstables").toLong )
+          getMetricValue(login, host, uname, pword, clusterName, node, keyspaceName._1, tableName, "cf-total-disk-used").map(v => Math.round(v / 1048576)).getOrElse(-1),
+          getMetricValue(login, host, uname, pword, clusterName, node, keyspaceName._1, tableName, "cf-live-sstables").getOrElse(-1D).toLong )
         )
       }
       a ++ List(OpsKeyspaceInfo(keyspaceName._1, k ) )
@@ -87,7 +87,7 @@ object OpsCenter {
   }
 
 
-  def getMetricTable(login: Login,
+  def getMetricValue(login: Login,
                      host: String,
                      uname: String,
                      pword: String,
@@ -95,21 +95,23 @@ object OpsCenter {
                      node: String,
                      keyspaceName: String,
                      tableName: String,
-                     metricName: String ) : Double = {
-    var retVal: Double = -1
+                     metricName: String ) : Option[Double] = {
     try {
       val url = s"http://$host/$clusterName/metrics/$node/${keyspaceName}/$tableName/$metricName?step=5&start=${System.currentTimeMillis / 1000 - 300}"
       //println (url)
       val metric = Http(url).header("opscenter-session", login.sessionid).header("Accept", "text/json").timeout(connTimeoutMs = 1000, readTimeoutMs = 10000).asString.body
       //println (metric)
-      retVal = (parse(metric) \\ "MAX").children.map(_.values).head.asInstanceOf[List[Double]](1)
+      val retVal : Option[Double] = Some((parse(metric) \\ "MAX").children.map(_.values).head.asInstanceOf[List[Double]](1))
       println (s"$clusterName.$keyspaceName.$tableName $metricName on $node = $retVal ")
-   } catch
-      {case e: Exception => {
-        log.info (s"Failed to get Metric info  for $clusterName.$keyspaceName.$tableName $metricName on $node; ${e.getMessage}")
-      }}
       retVal
-
+   } catch {
+      case e: Exception =>
+        log.info (s"Failed to get Metric info  for $clusterName.$keyspaceName.$tableName $metricName on $node; ${e.getMessage}")
+        None
+      case e: Throwable =>
+        log.warn(s"Failed to get Metric info  for $clusterName.$keyspaceName.$tableName $metricName on $node; ${e.getMessage}")
+        None
+      }
     }
 
 
