@@ -2,8 +2,7 @@ package team.supernova.confluence
 
 import java.util.Calendar
 
-import team.supernova._
-import team.supernova.GroupClusters
+import team.supernova.{GroupClusters, _}
 
 import scala.collection.SortedSet
 
@@ -46,6 +45,7 @@ object ClusterGroupPage {
           </tbody>
         </table>
       </p>
+      { GraphiteMetricSection.combinedMetricTable(groupClusters.clusterInfoList.map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.metrics)).toMap)}
       <h1>Cluster Keyspace Summary</h1>
       <p>
         <table>

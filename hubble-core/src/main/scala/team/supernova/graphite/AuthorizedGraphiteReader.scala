@@ -8,17 +8,21 @@ import org.slf4j.LoggerFactory
 import team.supernova._
 import team.supernova.cassandra.ClusterEnv
 
-object AuthorizedMetricRetriever{
-  def retrieveAll(cluster: ClusterEnv)={
+object AuthorizedGraphiteReader{
+  def retrieveAll(cluster: ClusterEnv):List[MetricResult]={
     cluster.graphiteConfig.graphite_metrics.map(metric =>
-      (metric.name, new AuthorizedMetricRetriever(metric.url_template, metric.func, cluster.graphiteConfig.graphite_uname, cluster.graphiteConfig.graphite_pword)))
-      .map(a => (a._1, a._2.retrieve(cluster.graphite)))
+      (
+        MetricDefinition(metric.name, metric.func, metric.format),
+        new AuthorizedGraphiteReader(metric.url_template, cluster.graphiteConfig.graphite_uname, cluster.graphiteConfig.graphite_pword)
+        ))
+      .map(a => {
+        val graphiteResult = a._2.retrieve(cluster.graphite)
+        a._1.process(graphiteResult._1, graphiteResult._2)
+      })
   }
 }
-
-class AuthorizedMetricRetriever(url_template: String, func: Option[String], graphiteUserName: String, graphitePassword: String) {
-  val log = LoggerFactory.getLogger(classOf[AuthorizedMetricRetriever])
-  val aggregateFunc = getAggregateFuncImplementation(func)
+class AuthorizedGraphiteReader(url_template: String, graphiteUserName: String, graphitePassword: String) {
+  val log = LoggerFactory.getLogger(classOf[AuthorizedGraphiteReader])
 
   def authorizedInputStream(url: String ): InputStream ={
     val name = graphiteUserName
@@ -34,17 +38,7 @@ class AuthorizedMetricRetriever(url_template: String, func: Option[String], grap
     is
   }
 
-  def getAggregateFuncImplementation(funcDef:Option[String]):Iterable[Double]=>Double = {
-    funcDef.map(_.toLowerCase) match{
-      case Some("avg") => a=>a.sum/a.size
-      case Some("sum") => a=>a.sum
-      case Some("min") => a=>a.min
-      case Some("max") => a=>a.max
-      case None => a=>a.last
-    }
-  }
-
-  def retrieve(templateArgs: Map[String, String]): Option[Double] = {
+  def retrieve(templateArgs: Map[String, String]): (MetricSource, List[List[Double]]) = {
     val url = new StringTemplate(url_template+"&rawData=true").fillWith(templateArgs)
     val csv = using(authorizedInputStream(url)) { isr => {
       scala.io.Source.fromInputStream(isr).getLines().toList
@@ -52,12 +46,9 @@ class AuthorizedMetricRetriever(url_template: String, func: Option[String], grap
     }
     log.info(s"Retrieved ${csv.size} metric series from $url")
     val values = csv.map(line=>line.split('|').last
-      .split(",").filterNot(_.equals("None")).map(_.trim.toDouble))
+      .split(",").filterNot(_.equals("None")).map(_.trim.toDouble).toList)
       .filterNot(_.isEmpty)
-    if (csv.isEmpty)
-      None
-    else
-      Some(aggregateFunc(values.map(aggregateFunc(_))))
+    (MetricSource(url.replaceAllLiterally("&rawData=true", "")), values)
   }
 
 

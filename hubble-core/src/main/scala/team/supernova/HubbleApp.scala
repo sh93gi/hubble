@@ -9,7 +9,7 @@ import team.supernova.actor.HubbleActor.Start
 import team.supernova.actor.collect.CassandraClusterGroup
 import team.supernova.cassandra.ClusterEnv
 import team.supernova.confluence.ConfluenceToken
-import team.supernova.graphite.GraphiteMetric
+import team.supernova.graphite.GraphiteMetricConfig
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -47,13 +47,18 @@ object HubbleApp extends App {
       pr.getInt("port"), pr.getString("pword"), pr.getString("uname"), pr.getInt("sequence"))
   }
 
-  def toMetric(cf: Config):GraphiteMetric={
-    new GraphiteMetric(cf.getString("url"),
+  def toMetric(cf: Config):GraphiteMetricConfig={
+    new GraphiteMetricConfig(cf.getString("url"),
       cf.getString("name"),
-      {if (!cf.hasPath("func")) None else Some(cf.getString("func"))})
+      {if (!cf.hasPath("func")) None else Some(cf.getString("func"))},
+      {if (!cf.hasPath("format")) None else Some(cf.getString("format"))}
+    )
   }
 
-  case class GraphiteConfig(graphite_template: String, graphite_metrics: List[GraphiteMetric], graphite_uname: String, graphite_pword: String)
+  case class GraphiteConfig(graphite_template: String,
+                            graphite_metrics: List[GraphiteMetricConfig],
+                            graphite_uname: String,
+                            graphite_pword: String)
 
   def mapConfigToGraphite(config: Config): GraphiteConfig = {
     val graphite_url=config.getString("hubble.graphite.url_template")

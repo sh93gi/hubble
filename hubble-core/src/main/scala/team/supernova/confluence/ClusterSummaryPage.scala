@@ -1,7 +1,6 @@
 package team.supernova.confluence
 
-import team.supernova._
-import team.supernova.ClusterInfo
+import team.supernova.{ClusterInfo, _}
 import team.supernova.graphite.StringTemplate
 
 import scala.collection.SortedSet
@@ -112,7 +111,7 @@ object ClusterSummaryPage {
           </tbody>
         </table>
       </p>
-      { GraphiteMetricSection.metricTable(clusterInfo.metrics)}
+      { GraphiteMetricSection.singleMetricTable(clusterInfo.metrics)}
       <h1>Keyspaces</h1>
       <p>
         <table>

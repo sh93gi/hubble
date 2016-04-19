@@ -1,9 +1,6 @@
 package team.supernova.confluence
 
-import team.supernova._
-import team.supernova.{Table, ClusterInfo, Keyspace}
-
-import scala.xml.NodeSeq
+import team.supernova.{ClusterInfo, Keyspace, Table, _}
 
 object KeyspacePage {
 

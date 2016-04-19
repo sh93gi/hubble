@@ -1,49 +1,84 @@
 package team.supernova.confluence
 
+import team.supernova.graphite.MetricResult
+
 import scala.xml.NodeSeq
-import scala.xml.NodeSeq.seqToNodeSeq
 
-class GraphiteMetricTable(metricNames: List[String]){
-  val headerNames = metricNames.sorted
-
-  def headerCells() : NodeSeq={
-    scala.xml.Unparsed( headerNames.mkString("<th>","</th><th>","</th>"))
+case class MetricXml(metric: MetricResult){
+  def nameNodes():NodeSeq={
+    scala.xml.Text(metric.name)
   }
 
-  def contentCells(metrics: List[(String, Option[Double])]) : NodeSeq={
+  def resultNodes():NodeSeq={
+    val sourceUrl = scala.xml.Utility.escape(metric.source.url)
+    val resultText = metric.formatted.getOrElse("N/A")
+    <a href={sourceUrl}>
+      {scala.xml.Text(resultText)}
+    </a>
+  }
+}
+
+
+class GraphiteMetricTable(metricNames: List[String]){
+  /**
+    * Sorted unique metric names
+    */
+  val headerNames = metricNames.toSet.toList.sorted
+
+  /**
+    * Create th node sequence (not including tr), to easily add metrics to an existing table
+    * @return nodeseq to insert within a tr to add metric header columns to a table
+    */
+  def headerCells() : NodeSeq={
+    headerNames.map(name=> <th>{scala.xml.Text(name)}</th>).toSeq
+  }
+
+  /**
+    * Create td node sequence (not including tr), to easily add metric values to an existing table
+    * @return nodeseq to insert within a tr to add metric value columns to a table
+    */
+  def contentCells(metrics: List[MetricResult]) : NodeSeq={
     // Create string(cell) representation of metric results
-    val metricMap = metrics.toMap.mapValues(_.map(_.toString))
-    scala.xml.Unparsed(
-      headerNames.map(metricMap.getOrElse("")
-        .mkString("<td>","</td><td>","</td"))
+    // N/A for metrics which were tried, but no result
+    val metricMap = metrics.map(a=>(a.name, a)).toMap.mapValues(result=> MetricXml(result).resultNodes()
+    )
+    // if one of the total metrics not found in this set, empty cell
+    headerNames.map(header=>
+      <td>{metricMap.getOrElse(header, NodeSeq.Empty)}</td>
+      ).toSeq
   }
 
 }
 
 object GraphiteMetricSection {
-  def metricTable(metrics: List[(String, Option[Double])]): NodeSeq={
+  def singleMetricTable(metrics: List[MetricResult]): NodeSeq={
     if (metrics.isEmpty)
       return NodeSeq.Empty
-    <h1>Metrics</h1>
+    <h1>Cluster Metrics</h1>
     <table>
       <tbody><tr><th>Metric Name</th><th>Metric Value</th></tr>
-        {scala.xml.Unparsed( metrics.sortBy(_._1).map(kv=>s"<tr><td>${kv._1}</td><td>${kv._2.getOrElse("N/A")}</td></tr>").mkString("\r\n")  ) }
+        {metrics.sortBy(_.name).map(MetricXml).map(result=>
+        {
+          <tr><td>{result.nameNodes()}</td><td>{ result.resultNodes()}</td></tr>
+        }).toSeq }
       </tbody>
     </table>
   }
 
-  def metricTable(multimetrics  : Map[String, List[(String, Option[Double])]]) : NodeSeq = {
-    if (multimetrics.values.flatten.map(_._2).filter(_.isDefined).isEmpty)
+  def combinedMetricTable(multimetrics  : Map[String, List[MetricResult]]) : NodeSeq = {
+    //Are there any metrics at all?
+    if (!multimetrics.values.flatten.map(_.value).exists(_.isDefined))
       return NodeSeq.Empty
-    val bigTable = new GraphiteMetricTable(multimetrics.values.flatten.map(_._1).toList)
-    <h1>Metrics</h1>
+    // All metrics, to distinguish between N/A (requested, but not found) and not requested
+    val metricTable = new GraphiteMetricTable(multimetrics.values.flatten.map(_.name).toList)
+    <h1>Cluster Metrics Summary</h1>
     <p>
       <table>
-        <tbody><tr><th>Cluster</th>{bigTable.headerCells()}</tr>
+        <tbody><tr><th>Cluster</th>{metricTable.headerCells()}</tr>
           {multimetrics.toList.sortBy(_._1).map(kv=>{
-            val clustername = kv._1
+            val clusterName = kv._1
             val clusterMetrics = kv._2
-            <tr><td>{clustername}</td>{bigTable.contentCells(clusterMetrics)}</tr>
+            <tr><td>{scala.xml.Utility.escape(clusterName)}</td>{metricTable.contentCells(clusterMetrics)}</tr>
           }).toSeq}
         </tbody>
       </table>
