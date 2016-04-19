@@ -9,7 +9,7 @@ import team.supernova.actor.HubbleActor.Start
 import team.supernova.actor.collect.CassandraClusterGroup
 import team.supernova.cassandra.ClusterEnv
 import team.supernova.confluence.ConfluenceToken
-import team.supernova.graphite.GraphiteMetricConfig
+import team.supernova.graphite.{GraphiteConfig, GraphiteMetricConfig, GraphitePlotConfig}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -55,17 +55,17 @@ object HubbleApp extends App {
     )
   }
 
-  case class GraphiteConfig(graphite_template: String,
-                            graphite_metrics: List[GraphiteMetricConfig],
-                            graphite_uname: String,
-                            graphite_pword: String)
+  def toGraphitePlotConfig(cf: Config): GraphitePlotConfig={
+    new GraphitePlotConfig(cf.getString("header"), cf.getString("url_template"))
+  }
+
 
   def mapConfigToGraphite(config: Config): GraphiteConfig = {
-    val graphite_url=config.getString("hubble.graphite.url_template")
+    val graphite_plot=toGraphitePlotConfig(config.getConfig("hubble.graphite.plot"))
     val graphite_uname=config.getString("hubble.graphite.username")
     val graphite_pword=config.getString("hubble.graphite.password")
     val graphite_metrics = config.getConfigList("hubble.graphite.metrics").map(toMetric).toList
-    GraphiteConfig(graphite_url, graphite_metrics, graphite_uname, graphite_pword)
+    GraphiteConfig(graphite_plot, graphite_metrics, graphite_uname, graphite_pword)
   }
 
   def mapConfigToCassandraClusterGroup(config: Config): List[CassandraClusterGroup] = {

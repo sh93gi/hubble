@@ -1,6 +1,6 @@
 package team.supernova.cassandra
 
-import team.supernova.HubbleApp.GraphiteConfig
+import team.supernova.graphite.GraphiteConfig
 
 case class ClusterEnv( cluster_name: String,
                        graphana: String,

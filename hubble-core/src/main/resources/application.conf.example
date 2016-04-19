@@ -7,7 +7,7 @@ hubble {
               {
                 cluster_name = the actual cluster name that cassandra cluster defines itself by. These Clusters are the DTAP for certain group (ex. "CLUSTER_1_DEV")
                 graphana = the host name of graphana. format is "serverHostname:port"
-                graphite = { dictionary of template arguments for hubble.graphite.url_template string
+                graphite = { dictionary of template arguments for hubble.graphite.plot.url_template string
                     key: value style definition of template arguments
                 }
                 hosts = [
@@ -32,7 +32,11 @@ hubble {
     space = the Confluence space where you want to write the pages to (e.g. "CASSANDRA")
   }
   graphite{
-    url_template = the string template in which '${key}' will be replaced by value's defined in the hubble.cassandra.clusters.graphite dictionary
+    plot{
+      header = the header to show above the graph, created using the following url template
+      url_template = the string template in which '${key}' will be replaced by value's defined in the hubble.cassandra.clusters.graphite dictionary.
+                     The result will be used on the cluster confluence pages as an image source
+    }
     username = the user used for http authorizing to graphite for metric retrieval
     password = the passoword for http authorizing to graphite for metric retrieval
     metrics = [

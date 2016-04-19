@@ -32,7 +32,11 @@ hubble {
     space = the Confluence space where you want to write the pages to (e.g. "CASSANDRA")
   }
   graphite{
-    url_template = the string template in which '${key}' will be replaced by value's defined in the hubble.cassandra.clusters.graphite dictionary
+    plot{
+      header = the header to show above the graph, created using the following url template
+      url_template = the string template in which '${key}' will be replaced by value's defined in the hubble.cassandra.clusters.graphite dictionary.
+                     The result will be used on the cluster confluence pages as an image source
+    }
     username = the user used for http authorizing to graphite for metric retrieval and graphite testing (to verify if templates are valid)
     password = the passoword for http authorizing to graphite for metric retrieval (to verify if templates are valid)
     metrics = [

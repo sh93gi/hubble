@@ -1,7 +1,6 @@
 package team.supernova.confluence
 
 import team.supernova.{ClusterInfo, _}
-import team.supernova.graphite.StringTemplate
 
 import scala.collection.SortedSet
 
@@ -69,7 +68,6 @@ object ClusterSummaryPage {
 
     val clusterWarnings = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.WARNING)).map(_.details).sorted.mkString("\n")
     val clusterErrors = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.ERROR)).map(_.details).sorted.mkString("\n")
-    val clusterGraphUrl = new StringTemplate(clusterInfo.cluster.graphiteConfig.graphite_template).fillWith(clusterInfo.cluster.graphite)
 
     import org.json4s._
     import org.json4s.jackson.JsonMethods._
@@ -83,7 +81,7 @@ object ClusterSummaryPage {
       <p>{ Confluence.confluenceCodeBlock("Errors", clusterErrors ,"none")}
         { Confluence.confluenceCodeBlock("Warnings", clusterWarnings ,"none")}
       </p>
-      <p><a href="{clusterGraphUrl}"><img src={ clusterGraphUrl }/></a></p>
+      { GraphitePlotSection.present(clusterInfo.cluster.graphiteConfig.graphite_plot, clusterInfo.cluster.graphite) }
       <p>{
         val slowToShow = clusterInfo.slowQueries.clusterSlow.get(10)
         if (slowToShow.isEmpty)
