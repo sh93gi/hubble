@@ -1,10 +1,26 @@
 package team.supernova.confluence
 
-import team.supernova.cassandra.{SlowQuery, ClusterSlowQueries}
+import team.supernova.ClusterInfo
+import team.supernova.cassandra.{ClusterSlowQueries, SlowQuery}
 
 import scala.xml.NodeSeq
 
 object SlowQuerySections {
+  def presentKeyspace(clusterInfo: ClusterInfo, keyspaceName: String): NodeSeq ={
+    clusterInfo.slowQueries.keyspaceSlow
+        .get(keyspaceName)
+        .map(topSlowest =>
+          SlowQuerySections.slowQueryTable(topSlowest.get(10))).getOrElse(NodeSeq.Empty)
+  }
+
+  def presentCluster(clusterInfo: ClusterInfo): NodeSeq ={
+    <p>{
+      val slowToShow = clusterInfo.slowQueries.clusterSlow.get(10)
+      if (slowToShow.isEmpty)
+        ""
+      else SlowQuerySections.slowQueryTable(clusterInfo.slowQueries.clusterSlow.get(10))}</p>
+      <p>{SlowQuerySections.slowQueryFailures(clusterInfo.slowQueries)}</p>
+  }
 
 
   def slowQueryFailures(clusterSlowQueries: ClusterSlowQueries) : NodeSeq = {

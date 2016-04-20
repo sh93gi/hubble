@@ -19,7 +19,7 @@ object ClusterSummaryPage {
             <td>
               { Confluence.confluenceCodeBlock("Schema",k.schemaScript,"none")}
               { Confluence.confluenceCodeBlock("Warnings",warnings,"scala")}
-              { clusterInfo.slowQueries.keyspaceSlow.get(k.keyspace_name).map(topSlowest => SlowQuerySections.slowQueryTable(topSlowest.get(10))).getOrElse("")}
+              { SlowQuerySections.presentKeyspace(clusterInfo, k.keyspace_name) }
             </td>
           </tr>
       }
@@ -82,12 +82,7 @@ object ClusterSummaryPage {
         { Confluence.confluenceCodeBlock("Warnings", clusterWarnings ,"none")}
       </p>
       { GraphitePlotSection.present(clusterInfo.cluster.graphiteConfig.graphite_plot, clusterInfo.cluster.graphite) }
-      <p>{
-        val slowToShow = clusterInfo.slowQueries.clusterSlow.get(10)
-        if (slowToShow.isEmpty)
-          ""
-        else SlowQuerySections.slowQueryTable(clusterInfo.slowQueries.clusterSlow.get(10))}</p>
-      <p>{SlowQuerySections.slowQueryFailures(clusterInfo.slowQueries)}</p>
+      { SlowQuerySections.presentCluster(clusterInfo) }
       <h1>Host Information</h1>
       <p>
         <table>
