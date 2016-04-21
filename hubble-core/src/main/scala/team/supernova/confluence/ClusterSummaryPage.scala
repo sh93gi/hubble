@@ -69,10 +69,6 @@ object ClusterSummaryPage {
     val clusterWarnings = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.WARNING)).map(_.details).sorted.mkString("\n")
     val clusterErrors = clusterInfo.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.ERROR)).map(_.details).sorted.mkString("\n")
 
-    import org.json4s._
-    import org.json4s.jackson.JsonMethods._
-    import org.json4s.jackson.Serialization.write
-    implicit val formats = DefaultFormats
 
     //The actual cluster page itself
     //need <body> tag otherwise ArrayBuilder is shown on confluence
@@ -83,28 +79,33 @@ object ClusterSummaryPage {
       </p>
       { GraphitePlotSection.present(clusterInfo.cluster.graphiteConfig.graphite_plot, clusterInfo.cluster.graphite) }
       { SlowQuerySections.presentCluster(clusterInfo) }
+      { GraphiteMetricSection.singleMetricTable(clusterInfo.metrics)}
       <h1>Host Information</h1>
       <p>
         <table>
           <tbody><tr><th>Data Center</th><th>Host Name</th><th>IP Address</th><th>Rack</th><th>C* Version</th><th>Extras</th></tr>
-            {scala.xml.Unparsed( clusterInfo.hosts.to[SortedSet].foldLeft("") { (at, host) => at +
-            <tr>
-              <td>{host.dataCenter}</td>
-              <td>{host.canonicalHostName}</td>
-              <td>{host.ipAddress}</td>
-              <td>{host.rack}</td>
-              <td>{host.version}</td>
-              <td>{
-                val yaml  =  try { pretty(parse( write(host.opsCenterNode.head.cassandra ) ))}
-                catch {case e: Exception => ""}
-                Confluence.confluenceCodeBlock("Yaml",yaml  ,"none")}</td>
-            </tr>
-          })
+            {clusterInfo.hosts.to[SortedSet].map(host =>
+              <tr>
+                <td>{host.dataCenter}</td>
+                <td>{host.canonicalHostName}</td>
+                <td>{host.ipAddress}</td>
+                <td>{host.rack}</td>
+                <td>{host.version}</td>
+                <td>{CassandraYamlSection.presentYamlShort(host.opsCenterNode.map(_.cassandra))}</td>
+              </tr>
+            ).toSeq
             }
           </tbody>
         </table>
       </p>
-      { GraphiteMetricSection.singleMetricTable(clusterInfo.metrics)}
+      {
+        val hostVsYaml = clusterInfo.hosts.toList.sortBy(_.canonicalHostName)
+          .map(host=>(
+            host.canonicalHostName,
+            host.opsCenterNode.map(_.cassandra)
+            ))
+        CassandraYamlSection.presentYamlCompare(hostVsYaml)
+      }
       <h1>Keyspaces</h1>
       <p>
         <table>
