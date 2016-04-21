@@ -9,7 +9,7 @@ import scala.collection.mutable
 
 object ClusterInfoActor {
   case class StartWorkOnCluster(cluster: ClusterEnv, group: String)
-  case class WorkOnClusterFinished(clusterResults: ClusterInfo)
+  case class WorkOnClusterFinished(cluster: ClusterEnv, clusterResults: Option[ClusterInfo])
   def props(requester: ActorRef): Props = Props(new ClusterInfoActor(requester))
 }
 
@@ -22,7 +22,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
 
   type ClusterName = String
   type ClusterGroup = String
-  var metaResult = mutable.Map[(ClusterName, ClusterGroup), Metadata]()
+  var metaResult = mutable.Map[(ClusterName, ClusterGroup), Option[Metadata]]()
   var slowQueryResult = mutable.Map[(ClusterName, ClusterGroup), ClusterSlowQueries]()
   var opsCenterResults = mutable.Map[(ClusterName, ClusterGroup), Option[OpsCenterClusterInfo]]()
 
@@ -33,11 +33,19 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
       metaActor ! ClusterMetadataActor.StartWorkOnCluster(cluster, group)
       slowqueryActor ! ClusterSlowQueryActor.StartWorkOnCluster(cluster, group)
 
-    case ClusterMetadataActor.Finished(metadata, cluster, group) =>
-      metaResult.+=( ((cluster.cluster_name, group), metadata))
-      log.info(s"Received cluster metadata of $group 's ${cluster.cluster_name}")
-      opsCenterActor ! OpsCenterClusterInfoActor.StartWorkOnCluster(cluster, metadata, group)
+    case ClusterMetadataActor.Finished(metadataResponse, cluster, group) =>{
+      metadataResponse match{
+        case Left(e)=>
+          log.error(s"Received failed cluster metadata of $group's ${cluster.cluster_name}. ${e.getMessage}")
+          metaResult.+=( ((cluster.cluster_name, group), None))
+          opsCenterResults.+=( ((cluster.cluster_name, group), None))
+        case Right(metadata)=>
+          metaResult.+=( ((cluster.cluster_name, group), Some(metadata)))
+          log.info(s"Received cluster metadata of $group 's ${cluster.cluster_name}")
+          opsCenterActor ! OpsCenterClusterInfoActor.StartWorkOnCluster(cluster, metadata, group)
+      }
       collectResults(cluster, group)
+    }
 
     case ClusterSlowQueryActor.Finished(slowQueries, cluster, group) =>
       slowQueryResult.+=( ((cluster.cluster_name, group), slowQueries))
@@ -64,12 +72,24 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
       log.info(s"Still waiting for opscenter info of $group 's ${cluster.cluster_name}")
 
     if (metaElement.isDefined && slowQueryElement.isDefined && opsinfoElement.isDefined){
-      val result = new ClusterInfo(
-        metaElement.get,
-        slowQueryElement.get,
-        opsinfoElement.get,
-        cluster, group)
-      requester ! ClusterInfoActor.WorkOnClusterFinished(result)
+      if (metaElement.get.isEmpty){
+        log.warning(s"Finished collecting all information of $group 's ${cluster.cluster_name}, but because of earlier failures, failed to construct clusterInfo")
+        requester ! ClusterInfoActor.WorkOnClusterFinished(cluster, None)
+      } else{
+        log.info(s"Finished collecting all information of $group 's ${cluster.cluster_name}, ")
+        try {
+          val result = new ClusterInfo(
+            metaElement.get.get,
+            slowQueryElement.get,
+            opsinfoElement.get,
+            cluster, group)
+          requester ! ClusterInfoActor.WorkOnClusterFinished(cluster, Some(result))
+        }catch{
+          case e:Throwable =>
+              log.error(e,"Failed to construct clusterInfo")
+              requester ! ClusterInfoActor.WorkOnClusterFinished(cluster, None)
+        }
+      }
     }
   }
 }

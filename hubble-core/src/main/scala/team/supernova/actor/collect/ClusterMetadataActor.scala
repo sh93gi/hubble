@@ -6,7 +6,7 @@ import team.supernova.cassandra.{CassandraClusterApi, ClusterEnv}
 
 object ClusterMetadataActor{
   case class StartWorkOnCluster(cluster: ClusterEnv, group: String)
-  case class Finished(clusterResults: Metadata, cluster: ClusterEnv, group: String)
+  case class Finished(clusterResults: Either[Throwable, Metadata], cluster: ClusterEnv, group: String)
 
   def props(requester: ActorRef) : Props =
     Props(new ClusterMetadataActor(requester))
@@ -14,8 +14,14 @@ object ClusterMetadataActor{
 
 class ClusterMetadataActor(requester: ActorRef)  extends Actor with ActorLogging {
 
-  def process(cluster: ClusterEnv, group:String)=
-    new CassandraClusterApi(cluster).metadata()
+  def process(cluster: ClusterEnv, group: String): Either[Throwable, Metadata] =
+  {
+    try {
+      Right(new CassandraClusterApi(cluster).metadata())
+    } catch {
+      case e: Throwable => Left(e)
+    }
+  }
 
   override def receive: Receive = {
     case ClusterMetadataActor.StartWorkOnCluster(cluster, group) =>

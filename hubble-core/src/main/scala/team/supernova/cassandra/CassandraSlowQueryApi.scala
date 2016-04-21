@@ -38,6 +38,10 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
     using(newSession()) { session =>
       if (limit.isDefined && count>=limit.get)
         return
+      val query = session.prepare(s"select commands, table_names, duration from dse_perf.node_slow_log " +
+        s"WHERE node_ip=? " +
+        s"AND date=? " +
+        s"$limit_text;")
       val nodes = session.execute("select peer from system.peers;").all().asScala.map(_.getInet("peer"))
       var failed : Option[Throwable] = None
       for (offset <- 0 to 7){
@@ -47,10 +51,6 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
           val node_inet = InetAddress.getByName(node_ip.getHostAddress)
           if (limit.isDefined && count>=limit.get)
             return //We are done, no more nodes/days to try
-          val query = session.prepare(s"select commands, table_names, duration from dse_perf.node_slow_log " +
-            s"WHERE node_ip=? " +
-            s"AND date=? " +
-            s"$limit_text;")
           val statement = query.bind(node_inet, midnight)
           try{
             // Could timeout on retrieving the first page

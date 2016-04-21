@@ -26,14 +26,13 @@ class ClusterSlowQueryActor(requester: ActorRef)  extends Actor with ActorLoggin
       })
     } catch {
       case e: ReadTimeoutException=>
-        log.error(e, s"When collecting slow queries of ${cluster.cluster_name}")
-        log.warning(s"Failed to collect all slow queries of ${cluster.cluster_name} because of a read timeout")
+        log.warning(s"Failed to collect all slow queries of ${cluster.cluster_name} because of a read timeout. ${e.getMessage}")
         clusterSlowQueries.failed(e)
       case e: UnauthorizedException=>
-        log.error(e, s"When collecting slow queries of ${cluster.cluster_name}")
+        log.error(s"Unauthorized exception when collecting slow queries of ${cluster.cluster_name}. ${e.getMessage}")
         clusterSlowQueries.failed(e)
       case e: Throwable=>
-        log.error(e, s"When collecting slow queries of ${cluster.cluster_name}")
+        log.error(e, s"Unanticipated exception when collecting slow queries of ${cluster.cluster_name}")
         clusterSlowQueries.failed(e)
     }
     log.info(s"Collected ${clusterSlowQueries.clusterSlow.commands.size} unique slow queries for the cluster ${cluster.cluster_name}, processed $mycounter.")

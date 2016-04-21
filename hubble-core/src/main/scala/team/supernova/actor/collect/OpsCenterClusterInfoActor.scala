@@ -16,7 +16,13 @@ object OpsCenterClusterInfoActor{
 class OpsCenterClusterInfoActor(requester: ActorRef)  extends Actor with ActorLogging {
 
   def process(cluster: ClusterEnv, meta: Metadata)=
+  try{
      new OpsCenterApi(cluster).getInfo(meta)
+  } catch {
+    case e: Throwable=>
+      log.error(e, "During OpsCenter's clusterinfo retrieval.")
+      None
+  }
 
   override def receive: Receive = {
     case OpsCenterClusterInfoActor.StartWorkOnCluster(cluster, meta, group) =>

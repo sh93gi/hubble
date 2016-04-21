@@ -1,6 +1,7 @@
 package team.supernova
 
 import org.json4s.jackson.JsonMethods._
+import org.slf4j.LoggerFactory
 import team.supernova.domain.{CassandraYaml, Login}
 
 import scalaj.http._
@@ -31,6 +32,7 @@ object OpsCenter {
   val readTimeout = 20000
   val connTimeout = 10000
 
+  val log= LoggerFactory.getLogger(OpsCenter.getClass)
 
 //  //TODO not sure why i canot serialize it!
 //  def getClusterNames (host: String, login: Login) : List[String]  = {
@@ -104,8 +106,7 @@ object OpsCenter {
       println (s"$clusterName.$keyspaceName.$tableName $metricName on $node = $retVal ")
    } catch
       {case e: Exception => {
-        println (s"$e")
-        println (s"Failed to get Metric info  for $clusterName.$keyspaceName.$tableName $metricName on $node")
+        log.info (s"Failed to get Metric info  for $clusterName.$keyspaceName.$tableName $metricName on $node; ${e.getMessage}")
       }}
       retVal
 
