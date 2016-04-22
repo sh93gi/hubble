@@ -98,6 +98,7 @@ object ClusterSummaryPage {
           </tbody>
         </table>
       </p>
+      <h1>Node Yaml comparison</h1>
       {
         val hostVsYaml = clusterInfo.hosts.toList.sortBy(_.canonicalHostName)
           .map(host=>(

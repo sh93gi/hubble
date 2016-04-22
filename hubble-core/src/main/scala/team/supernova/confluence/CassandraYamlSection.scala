@@ -12,8 +12,9 @@ import scala.collection.JavaConverters._
 import scala.xml.{NodeSeq, Text}
 
 object CassandraYamlSection {
+
   def presentYamlCompare(yamls : List[(String, Option[CassandraYaml])]) : NodeSeq = {
-    val yamlAvailable = yamls.filter(_._2.isDefined).map(kv=>(kv._1, kv._2.get))
+    val yamlAvailable = yamls.filter(_._2.isDefined).map(kv=>(kv._1, kv._2.get)).sortBy(_._1)
     if (yamlAvailable.isEmpty)
       return NodeSeq.Empty
     // get keys, ordered by number unique values
@@ -22,34 +23,52 @@ object CassandraYamlSection {
         .groupBy(_._1)  // group by key of (key, value) tuple
         .mapValues(pairs=>pairs.map(_._2).toSet.size - 1) // map list if (key, value) to count of different values
         .toList.sortBy(kv=>(-kv._2, kv._1)) // create descending sorted list, first by nr values, then by name
-    val nodeNames = yamlAvailable.sortBy(_._1)
+
     def joinWithBr(a: NodeSeq, b:NodeSeq)={
       a.++(xml.Unparsed("<br/>")).++(b)
     }
-    <h1>Node Yaml comparison</h1>
-      <p>
+
+    val tableHeader:NodeSeq =
+      <tr> <th>Yaml key</th> <th>nr different values</th>{yamlAvailable.map(nameYaml => <th>
+            {Text(nameYaml._1)}
+          </th>)}
+      </tr>
+
+    def createTableRow(key: String , valueCount: Int):NodeSeq={
+      <tr>
+        <td>
+          {Text(key)}
+        </td>
+        <td>
+          {valueCount}
+        </td>{yamlAvailable.map(nameYaml =>
+        <td>
+          {nameYaml._2.all.get(key).map(yamlValueToString).getOrElse("").split("\r\n").map(s => Text(s))
+          .reduce(joinWithBr)}
+        </td>
+      ).toSeq}
+      </tr>
+    }
+
+    <p>
+      {if (keys.exists(_._2 > 0)) {
+      <table>
+        <tbody>
+          {tableHeader}
+          {keys.filter(_._2 > 0).map(keyCount => createTableRow(keyCount._1, keyCount._2))}
+        </tbody>
+      </table>
+    }}{if (keys.exists(_._2 == 0)) {
+      Confluence.confluenceExpandBlock("Equal settings",
         <table>
-          <tbody><tr><th>Yaml key</th><th>nr different values</th>{ nodeNames.map(nameYaml=> <th>{Text(nameYaml._1)}</th>) }</tr>
-            {
-            keys.map(keyCount=>{
-              val key = keyCount._1
-              val valueCount = keyCount._2
-              <tr>
-                <td>{Text(key)}</td>
-                <td>{valueCount}</td>{
-                nodeNames.map(nameYaml=>
-                  <td>{
-                    nameYaml._2.all.get(key).map(yamlValueToString).getOrElse("").split("\r\n").map(s=>Text(s))
-                      .reduce(joinWithBr)
-                    }</td>
-                ).toSeq
-                }
-              </tr>
-            })
-            }
+          <tbody>
+            {tableHeader}
+            {keys.filter(_._2 == 0).map(keyCount => createTableRow(keyCount._1, keyCount._2))}
           </tbody>
         </table>
-      </p>
+      )
+    }}
+    </p>
   }
 
   def deepAsJava(value:Any):Any={
