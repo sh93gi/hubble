@@ -95,7 +95,7 @@ object CassandraYamlSection {
           val out = new StringWriter
           mapper.writeValue(out, deepAsJava(value))
           val json = out.toString
-          pretty(parse(json))
+          filterPasswordLines(pretty(parse(json)))
         }
         catch {
           case e: Exception =>
@@ -109,11 +109,15 @@ object CassandraYamlSection {
       return NodeSeq.Empty
     implicit val formats = DefaultFormats
     val yaml = try {
-      pretty(parse(write(opsCenterNode.get)))
+      filterPasswordLines(pretty(parse(write(opsCenterNode.get))))
     }
     catch {
       case e: Exception => ""
     }
     Confluence.confluenceCodeBlock("Yaml", yaml, "none")
+  }
+
+  def filterPasswordLines(json: String): String = {
+    json.linesWithSeparators.filterNot(_.toLowerCase.contains("password")).mkString("")
   }
 }
