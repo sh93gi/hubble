@@ -114,4 +114,13 @@ object Confluence {
       NodeSeq.Empty
     }
   }
+
+  def joinWithBr(a: NodeSeq, b:NodeSeq)={
+    if (b equals NodeSeq.Empty)
+      a
+    else if (a equals NodeSeq.Empty)
+      b
+    else
+      a.++(xml.Unparsed("<br/>")).++(b)
+  }
 }
