@@ -9,10 +9,19 @@ import team.supernova.graphite.{AuthorizedGraphiteReader, GraphiteFixture}
 
 abstract class AuthorizedMetricRetrieverSpecBase
   extends TestKit(ActorSystem(classOf[AuthorizedMetricRetrieverSpecBase].getSimpleName))
-    with FunSpecLike
-    with CassandraClusterGroupFixture
-with GraphiteFixture{
-  val clusterInstance: ClusterEnv = cassandragroup.head.envs.last
+  with FunSpecLike
+  with CassandraClusterGroupFixture
+  with GraphiteFixture{
+
+  def clusterInstance: ClusterEnv = clusterEnvWithHttpAuthorizedGraphite
+
+  /**
+    * A ClusterEnv which is used to complete the graphite template url.
+    * This testsuite assumes that the graphite server uses http authorization
+    * Example value: cassandragroup.head.envs.last
+    * @return
+    */
+  def clusterEnvWithHttpAuthorizedGraphite: ClusterEnv
 
   describe("graphite metric retrieval"){
 

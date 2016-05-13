@@ -12,7 +12,11 @@ abstract class ConfluenceSpecBase
   with FunSpecLike
   with ConfluenceFixture {
 
-  def existingPage: String
+  /**
+    * The name of a child page of the space defined in the application.conf
+    * @return
+    */
+  def existingPageInConfluenceSpace: String
 
 //  it  ("Pretty Print ClusterInfo") {
 //   // val cluster = ClusterInfo.createClusterInfo(session, GROUP)
@@ -32,7 +36,7 @@ abstract class ConfluenceSpecBase
     val token: Token = ConfluenceToken.getConfluenceToken (system.settings.config)
 
     val page: Page = new Page
-    val parentPage: RemotePage = page.read(SPACE, existingPage)
+    val parentPage: RemotePage = page.read(SPACE, existingPageInConfluenceSpace)
     println (parentPage.getContent)
   }
 

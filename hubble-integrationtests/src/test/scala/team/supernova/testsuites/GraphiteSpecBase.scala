@@ -9,7 +9,7 @@ import akka.testkit.TestKit
 import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
 import team.supernova._
-import team.supernova.cassandra.ClusterEnv
+import team.supernova.cassandra.{CassandraClusterGroupFixture, ClusterEnv}
 import team.supernova.graphite.GraphiteFixture
 
 abstract class GraphiteSpecBase
@@ -18,7 +18,13 @@ abstract class GraphiteSpecBase
       with GraphiteFixture
       with CassandraClusterGroupFixture{
 
-  val clusterInstance: ClusterEnv = cassandragroup.head.envs.last // small cluster, such that clusterinfo is fast
+  def clusterInstance: ClusterEnv = clusterInstanceWithGraphiteService
+
+  /**
+    * A clusterInstance which is used to fill in the graphite template
+    * Example value: cassandragroup.head.envs.last
+    */
+  def clusterInstanceWithGraphiteService: ClusterEnv
 
   describe("Graphite API"){
     it ("should construct"){

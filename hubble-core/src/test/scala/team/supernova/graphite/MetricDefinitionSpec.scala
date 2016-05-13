@@ -1,15 +1,10 @@
 package team.supernova.graphite
 
-import akka.actor.ActorSystem
-import akka.testkit.TestKit
+import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
-import org.scalatest.{FunSpecLike, Matchers}
-import team.supernova.CassandraClusterGroupFixture
 
 class MetricDefinitionSpec
-  extends TestKit(ActorSystem(classOf[MetricDefinitionSpec].getSimpleName))
-  with FunSpecLike
-  with CassandraClusterGroupFixture {
+  extends FunSpecLike{
 
 
   describe("graphite metric definition") {

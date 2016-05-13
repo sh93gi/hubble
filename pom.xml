@@ -8,6 +8,8 @@
     <packaging>pom</packaging>
     <properties>
         <scala.version>2.11.7</scala.version>
+        <akkatestkit.version>2.3.10</akkatestkit.version>
+        <cassandra.version>2.1.7</cassandra.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -36,6 +38,7 @@
     <modules>
         <module>hubble-core</module>
         <module>hubble-reporting</module>
+        <module>hubble-integrationtests</module>
     </modules>
     <build>
         <plugins>

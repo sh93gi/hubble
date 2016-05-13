@@ -14,11 +14,12 @@ abstract class CassandraSlowQueryAvailableSpecBase
     with FunSpecLike
     with ClusterConnectorFixture
     with CassandraClusterGroupFixture {
-  val clusterInstance: ClusterEnv = clusterEnvWithSlowQueries
+
+  def clusterInstance: ClusterEnv = clusterEnvWithSlowQueries
 
   /**
-    * A ClusterEnv which has a dse_perf.node_slow_log table
-    *
+    * A ClusterEnv which has a dse_perf.node_slow_log table with some rows
+    * Example value: cassandragroup.head.envs.head
     * @return
     */
   def clusterEnvWithSlowQueries : ClusterEnv

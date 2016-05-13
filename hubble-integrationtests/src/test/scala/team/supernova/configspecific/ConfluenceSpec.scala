@@ -1,5 +1,7 @@
 package team.supernova.configspecific
 
-class ConfluenceSpec {
+import team.supernova.testsuites.ConfluenceSpecBase
 
+class ConfluenceSpec extends ConfluenceSpecBase{
+  override def existingPageInConfluenceSpace: String = "SN-GRID-PRD"
 }
