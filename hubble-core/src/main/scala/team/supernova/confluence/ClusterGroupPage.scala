@@ -48,7 +48,9 @@ object ClusterGroupPage {
       { GraphiteMetricSection.combinedMetricTable(groupClusters.clusterInfoList.map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.metrics)).toMap)}
       <h1>Cluster Yaml comparison</h1>
       {
-        val keyVsYaml = groupClusters.clusterInfoList.toList.map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.opsCenterClusterInfo.map(_.nodes.head.cassandra)))
+        val keyVsYaml = groupClusters.clusterInfoList.toList
+          .map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.opsCenterClusterInfo
+          .map(_.nodes.headOption.map(_.cassandra)).flatten.getOrElse(None)))
         CassandraYamlSection.presentYamlCompare(keyVsYaml)
       }
       <h1>Cluster Keyspace Summary</h1>

@@ -91,7 +91,7 @@ object ClusterSummaryPage {
                 <td>{host.ipAddress}</td>
                 <td>{host.rack}</td>
                 <td>{host.version}</td>
-                <td>{CassandraYamlSection.presentYamlShort(host.opsCenterNode.map(_.cassandra))}</td>
+                <td>{CassandraYamlSection.presentYamlShort(host.opsCenterNode.flatMap(_.cassandra))}</td>
               </tr>
             ).toSeq
             }
@@ -103,7 +103,7 @@ object ClusterSummaryPage {
         val hostVsYaml = clusterInfo.hosts.toList.sortBy(_.canonicalHostName)
           .map(host=>(
             host.canonicalHostName,
-            host.opsCenterNode.map(_.cassandra)
+            host.opsCenterNode.flatMap(_.cassandra)
             ))
         CassandraYamlSection.presentYamlCompare(hostVsYaml)
       }

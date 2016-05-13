@@ -1,7 +1,8 @@
 package team.supernova.cassandra
 
 import com.datastax.driver.core.Metadata
-import team.supernova.{Keyspace, OpsCenter, OpsCenterClusterInfo}
+import team.supernova.Keyspace
+import team.supernova.opscenter.{OpsCenter, OpsCenterClusterInfo}
 
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet
@@ -14,6 +15,6 @@ class OpsCenterApi(cluster: ClusterEnv) {
       new Keyspace(i, dataCenter)
     }).to
     val opsKeyInfo: Map[String, List[String]]  = keyspaces.foldLeft(Map[String, List[String]]()){ (a,b) => a ++ Map( b.keyspace_name -> b.tables.map(_.table_name) ) }
-    OpsCenter.createOpsCenterClusterInfo(cluster.opscenter, cluster.ops_uname, cluster.ops_pword, metaData.getClusterName(), opsKeyInfo )
+    OpsCenter.gatherOpsCenterClusterInfo(cluster.opscenter, cluster.ops_uname, cluster.ops_pword, metaData.getClusterName(), opsKeyInfo )
     }
 }
