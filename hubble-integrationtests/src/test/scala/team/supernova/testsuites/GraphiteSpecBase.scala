@@ -1,4 +1,4 @@
-package team.supernova.graphite
+package team.supernova.testsuites
 
 import java.io.InputStream
 import java.net.URL
@@ -10,8 +10,9 @@ import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
 import team.supernova._
 import team.supernova.cassandra.ClusterEnv
+import team.supernova.graphite.GraphiteFixture
 
-class GraphiteSpec
+abstract class GraphiteSpecBase
     extends TestKit(ActorSystem("ConfluenceSpec"))
       with FunSpecLike
       with GraphiteFixture

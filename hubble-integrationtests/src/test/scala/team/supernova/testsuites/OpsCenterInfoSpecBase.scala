@@ -1,13 +1,13 @@
-package team.supernova
+package team.supernova.testsuites
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
-import team.supernova.cassandra.{CassandraClusterApi, ClusterEnv, OpsCenterApi}
+import team.supernova.cassandra._
 
 
-class OpsCenterInfoSpec
+abstract class OpsCenterInfoSpecBase
   extends TestKit(ActorSystem("CassandraClusterInfoSpec"))
   with FunSpecLike
   with ClusterConnectorFixture

@@ -1,14 +1,14 @@
-package team.supernova.graphite
+package team.supernova.testsuites
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
-import team.supernova.CassandraClusterGroupFixture
-import team.supernova.cassandra.ClusterEnv
+import team.supernova.cassandra.{CassandraClusterGroupFixture, ClusterEnv}
+import team.supernova.graphite.{AuthorizedGraphiteReader, GraphiteFixture}
 
-class AuthorizedMetricRetrieverSpec
-  extends TestKit(ActorSystem(classOf[AuthorizedMetricRetrieverSpec].getSimpleName))
+abstract class AuthorizedMetricRetrieverSpecBase
+  extends TestKit(ActorSystem(classOf[AuthorizedMetricRetrieverSpecBase].getSimpleName))
     with FunSpecLike
     with CassandraClusterGroupFixture
 with GraphiteFixture{

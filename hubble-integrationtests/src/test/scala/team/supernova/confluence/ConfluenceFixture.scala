@@ -1,7 +1,6 @@
-package team.supernova
+package team.supernova.confluence
 
 import akka.actor.ActorSystem
-import team.supernova.confluence.ConfluenceToken
 
 trait ConfluenceFixture {
   def system: ActorSystem
