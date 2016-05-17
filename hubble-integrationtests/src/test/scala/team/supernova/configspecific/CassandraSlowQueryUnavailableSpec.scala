@@ -6,9 +6,7 @@ import team.supernova.testsuites.CassandraSlowQueryUnavailableSpecBase
 class CassandraSlowQueryUnavailableSpec extends CassandraSlowQueryUnavailableSpecBase {
 
   /**
-    * A ClusterEnv which has a dse_perf.node_slow_log table
-    *
-    * @return
+    * A ClusterEnv which does NOT have a dse_perf.node_slow_log table
     */
-  override def clusterEnvWithSlowQueries: ClusterEnv = cassandragroup.head.envs.last // one without dse_perf keyspace
+  override def clusterEnvWithSlowQueries: ClusterEnv = cassandragroup.last.envs.last
 }
