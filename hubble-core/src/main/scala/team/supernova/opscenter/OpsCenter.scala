@@ -12,17 +12,25 @@ object OpsCenter {
 
   val log = LoggerFactory.getLogger(OpsCenter.getClass)
 
+  implicit def HttpSessionToHttpRequest(httpSession: HttpSession) : HttpRequest = httpSession.http
+
+  implicit class HttpSession(val http: HttpRequest){
+    def withHeaders(login: Login): HttpSession = {
+      http.header("opscenter-session", login.sessionid)
+        .header("Accept", "text/json")
+    }
+  }
+
   def tryNodeNames(host: String, login: Login, clusterName: String): Try[List[String]] = {
     import org.json4s._
     import org.json4s.jackson.JsonMethods._
 
-    val nodesAttempt = Try(Http(s"http://$host/$clusterName/nodes").header("opscenter-session", login.sessionid)
-      .header("Accept", "text/json")
-      .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
-      .asString.body)
+    val nodesAttempt = Try(Http(s"http://$host/$clusterName/nodes")
+        .withHeaders(login)
+        .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
+        .asString.body)
     nodesAttempt.flatMap(response => Try((parse(response) \\ "node_ip").children.map(_.values.toString)))
   }
-
 
   def getTableSize(login: Login,
                    host: String,
@@ -51,7 +59,8 @@ object OpsCenter {
 
   def tryLogin(host: String, uname: String, pword: String): Try[Login] = {
     //login to OpsCenter and get session id
-    val loginattempt = Try(Http(s"http://$host/login").param("username", uname).param("password", pword)
+    val loginattempt = Try(Http(s"http://$host/login")
+      .param("username", uname).param("password", pword)
       .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
       .asString.body)
     loginattempt.flatMap(response => Try(Login.parseLogin(response)))
@@ -59,10 +68,9 @@ object OpsCenter {
 
   def tryYaml(login: Login, host: String, clusterName: String, node_ip: String): Try[CassandraYaml] = {
     val nodeconfattempt = Try(Http(s"http://$host/$clusterName/nodeconf/$node_ip")
-      .header("opscenter-session", login.sessionid)
-      .header("Accept", "text/json")
-      .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
-      .asString.body)
+        .withHeaders(login)
+        .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
+        .asString.body)
     nodeconfattempt.flatMap(response => Try(CassandraYaml.parseBody(response)))
   }
 
@@ -77,10 +85,9 @@ object OpsCenter {
                 metricName: String): Try[Option[Double]] = {
     val url = s"http://$host/$clusterName/metrics/$node/${keyspaceName}/$tableName/$metricName?step=120&start=${System.currentTimeMillis / 1000 - 300}&function=max"
     val metricattempt = Try(Http(url)
-      .header("opscenter-session", login.sessionid)
-      .header("Accept", "text/json")
-      .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
-      .asString.body)
+        .withHeaders(login)
+        .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
+        .asString.body)
     metricattempt
       .logFailure(e => log.error(s"Failed to receive $metricName data of $keyspaceName on $node in $clusterName, using $url, because of ${e.getMessage}"))
       .logSuccess(metric => log.info(s"Received $metricName raw data of $keyspaceName on $node in $clusterName. Value = $metric"))
