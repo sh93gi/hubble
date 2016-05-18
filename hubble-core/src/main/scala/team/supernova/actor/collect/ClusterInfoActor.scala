@@ -19,7 +19,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
   import context._
 
   val metaActor = actorOf(ClusterMetadataActor.props(self))
-  val slowqueryActor = actorOf(ClusterSlowQueryActor.props(self))
+  val slowQueryActor = actorOf(ClusterSlowQueryActor.props(self))
   val opsCenterActor = actorOf(OpsCenterClusterInfoActor.props(self))
   val graphiteActor = actorOf(GraphiteMetricActor.props(self))
 
@@ -34,7 +34,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
     case ClusterInfoActor.StartWorkOnCluster(cluster, group) =>
       log.info(s"Starting collecting cluster related info of $group 's ${cluster.cluster_name}")
       metaActor ! ClusterMetadataActor.StartWorkOnCluster(cluster, group)
-      slowqueryActor ! ClusterSlowQueryActor.StartWorkOnCluster(cluster, group)
+      slowQueryActor ! ClusterSlowQueryActor.StartWorkOnCluster(cluster, group)
       graphiteActor ! GraphiteMetricActor.StartWorkOnCluster(cluster, group)
 
     case ClusterMetadataActor.Finished(metadataResponse, cluster, group) =>{
@@ -69,22 +69,22 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
 
   def collectResults(cluster: ClusterEnv, group: String): Unit ={
     val metaElement = metaResult.get((cluster.cluster_name, group))
-    if (!metaElement.isDefined)
+    if (metaElement.isEmpty)
       log.info(s"Still waiting for metadata of $group 's ${cluster.cluster_name}")
 
     val slowQueryElement = slowQueryResult.get((cluster.cluster_name, group))
-    if (!slowQueryElement.isDefined)
+    if (slowQueryElement.isEmpty)
       log.info(s"Still waiting for slow query data of $group 's ${cluster.cluster_name}")
 
-    val opsinfoElement = opsCenterResults.get((cluster.cluster_name, group))
-    if (!opsinfoElement.isDefined)
+    val opsInfoElement = opsCenterResults.get((cluster.cluster_name, group))
+    if (opsInfoElement.isEmpty)
       log.info(s"Still waiting for opscenter info of $group 's ${cluster.cluster_name}")
 
     val graphiteElement = graphiteResults.get((cluster.cluster_name, group))
-    if (!graphiteElement.isDefined)
+    if (graphiteElement.isEmpty)
       log.info(s"Still waiting for graphite info of $group 's ${cluster.cluster_name}")
 
-    if (metaElement.isDefined && slowQueryElement.isDefined && opsinfoElement.isDefined && graphiteElement.isDefined){
+    if (metaElement.isDefined && slowQueryElement.isDefined && opsInfoElement.isDefined && graphiteElement.isDefined){
       if (metaElement.get.isEmpty){
         log.warning(s"Finished collecting all information of $group 's ${cluster.cluster_name}, but because of earlier failures, failed to construct clusterInfo")
         requester ! ClusterInfoActor.WorkOnClusterFinished(cluster, None)
@@ -94,9 +94,10 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
           val result = new ClusterInfo(
             metaElement.get.get,
             slowQueryElement.get,
-            opsinfoElement.get,
+            opsInfoElement.get,
             graphiteElement.get,
-            cluster, group)
+            cluster,
+            group)
           requester ! ClusterInfoActor.WorkOnClusterFinished(cluster, Some(result))
         }catch{
           case e:Throwable =>

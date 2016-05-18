@@ -14,13 +14,15 @@ trait ClusterWorkerBatch[T] extends Actor with ActorLogging {
     */
   var clusterResults: Set[T] = Set.empty
 
+  private val nrOfInstances: Int = 5
   /**
     * The batch of workers, of which each one will work on a single cluster(env)
     */
-  val clusterWorkers = context.actorOf(RoundRobinPool(5).props(newActor()), "clusterWorker")
+  val clusterWorkers = context.actorOf(RoundRobinPool(nrOfInstances).props(newActor()), "clusterWorker")
 
   /**
     * Start analyzing all cluster groups.
+    *
     * @param clusterGroups the collection of clustergrougs (each one holding a set of clusters)
     */
   def runOnAll(clusterGroups: List[CassandraClusterGroup]) = {
@@ -32,6 +34,7 @@ trait ClusterWorkerBatch[T] extends Actor with ActorLogging {
 
   /**
     * Start analyzing a single cluster(env)
+    *
     * @param clusterEnv the cluster to be analyzed
     * @param clusterGroup the (logical) group the cluster belongs to, sometimes usefull for the worker
     */
@@ -45,6 +48,7 @@ trait ClusterWorkerBatch[T] extends Actor with ActorLogging {
   /**
     * To be called by the subclass when a result has been received.
     * Will keep track of number of outstanding requests, and will call finished if all work has been done.
+    *
     * @param clusterResult the single result element received from one of the workers
     */
   def received(clusterResult: T): Unit = {
@@ -57,6 +61,7 @@ trait ClusterWorkerBatch[T] extends Actor with ActorLogging {
 
   /**
     * Factory method for a new akka actor, of which a set of instances will be created to distibute the work amongs
+    *
     * @return akka props allowing creation of akka instances.
     *         The created instances will receive messages to work on single cluster(env)s
     */
@@ -71,6 +76,7 @@ trait ClusterWorkerBatch[T] extends Actor with ActorLogging {
 
   /**
     * Factory method to create the akka message expected by your newActor()
+    *
     * @param clusterEnv the single cluster(env) to be analyzed
     * @param clusterGroup the group name it belongs to
     * @return an akka message, which will be sent to one of the intances createed by newActor()

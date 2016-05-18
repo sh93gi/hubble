@@ -31,13 +31,13 @@ abstract class CassandraSlowQueryAvailableSpecBase
 
     it("should find slow queries") {
       val all = ArrayBuffer[SlowQuery]()
-      new CassandraSlowQueryApi(clusterInstance).foreach(Some(50))(all.+=(_))
+      new CassandraSlowQueryApi(clusterInstance).foreach(50)(all.+=(_))
       all.size should be > 1
     }
 
     it("rows should be transformable to slowqueries") {
       using(newSession()) { session =>
-        new CassandraSlowQueryApi(clusterInstance).foreach(Some(50))(queryDetails => {
+        new CassandraSlowQueryApi(clusterInstance).foreach(50)(queryDetails => {
           queryDetails.commands.size should be > 0
           queryDetails.duration should be > 0L
           queryDetails.keyspaces.size should be > 0

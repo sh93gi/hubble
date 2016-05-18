@@ -16,13 +16,13 @@ class ClusterSlowQueryActor(requester: ActorRef)  extends Actor with ActorLoggin
 
   def process(cluster: ClusterEnv) = {
     val clusterSlowQueries = new ClusterSlowQueries(Some(25))
-    var mycounter = 0
+    var myCounter = 0
     try{
-      new CassandraSlowQueryApi(cluster).foreach(None)(q=>{
+      new CassandraSlowQueryApi(cluster).foreach(q=>{
         clusterSlowQueries.add(q)
-        mycounter+=1
-        if (mycounter%10000==0)
-          log.info(s"So far collected ${clusterSlowQueries.clusterSlow.commands.size} unique slow queries for the cluster ${cluster.cluster_name}, processed $mycounter.")
+        myCounter+=1
+        if (myCounter%10000==0)
+          log.info(s"So far collected ${clusterSlowQueries.clusterSlow.commands.size} unique slow queries for the cluster ${cluster.cluster_name}, processed $myCounter.")
       })
     } catch {
       case e: ReadTimeoutException=>
@@ -35,7 +35,7 @@ class ClusterSlowQueryActor(requester: ActorRef)  extends Actor with ActorLoggin
         log.error(e, s"Unanticipated exception when collecting slow queries of ${cluster.cluster_name}")
         clusterSlowQueries.failed(e)
     }
-    log.info(s"Collected ${clusterSlowQueries.clusterSlow.commands.size} unique slow queries for the cluster ${cluster.cluster_name}, processed $mycounter.")
+    log.info(s"Collected ${clusterSlowQueries.clusterSlow.commands.size} unique slow queries for the cluster ${cluster.cluster_name}, processed $myCounter.")
     clusterSlowQueries
   }
 

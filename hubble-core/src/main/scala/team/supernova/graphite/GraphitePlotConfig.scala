@@ -1,4 +1,4 @@
 package team.supernova.graphite
 
-case class GraphitePlotConfig(val header: String, val url_template: String)
+case class GraphitePlotConfig(header: String, url_template: String)
 
