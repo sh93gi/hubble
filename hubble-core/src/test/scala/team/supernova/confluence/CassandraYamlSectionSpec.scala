@@ -53,13 +53,14 @@ class CassandraYamlSectionSpec
     describe("presentYamlShort"){
       it("should print something"){
         val content = CassandraYamlSection.presentYamlShort(Some(CassandraYaml(Map(("a", 1), ("b",2))))).toString()
-        content should contain ("\"a\" : 1")
+        content should include ("\"a\" : 1")
       }
     }
 
     describe("presentYamlCompare"){
       it("should print something"){
-        println(CassandraYamlSection.presentYamlShort(Some(CassandraYaml(Map(("a", 1), ("b",2))))))
+        val content = CassandraYamlSection.presentYamlShort(Some(CassandraYaml(Map(("a", 1), ("b",2))))).toString()
+        content should include ("\"a\" : 1")
       }
     }
   }
