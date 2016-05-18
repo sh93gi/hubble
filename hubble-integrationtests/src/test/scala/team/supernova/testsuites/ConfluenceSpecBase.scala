@@ -1,20 +1,23 @@
-package team.supernova
+package team.supernova.testsuites
 
 import akka.actor.ActorSystem
 import akka.testkit._
 import org.scalatest._
-import team.supernova.confluence.ConfluenceToken
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
+import team.supernova.confluence.{ConfluenceFixture, ConfluenceToken}
 
-/**
- * Created by Gary Stewart on 4-8-2015.
- *
- */
-class ConfluenceSpec
+abstract class ConfluenceSpecBase
   extends TestKit(ActorSystem("ConfluenceSpec"))
   with FunSpecLike
   with ConfluenceFixture {
+
+  /**
+    * The name of a child page of the space defined in the application.conf
+    * @return
+    */
+  def existingPageInConfluenceSpace: String
+
 //  it  ("Pretty Print ClusterInfo") {
 //   // val cluster = ClusterInfo.createClusterInfo(session, GROUP)
 //    //TODO fix me
@@ -31,11 +34,9 @@ class ConfluenceSpec
 
   it  ("Confluence Test Read Page") {
     val token: Token = ConfluenceToken.getConfluenceToken (system.settings.config)
-    val pageName = "SN-GRID-PRD"
-    //val pageName = "<Keyspace Name>"
 
     val page: Page = new Page
-    val parentPage: RemotePage = page.read(SPACE, pageName)
+    val parentPage: RemotePage = page.read(SPACE, existingPageInConfluenceSpace)
     println (parentPage.getContent)
   }
 

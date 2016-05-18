@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<prerequisites>
+		<maven>3.0.0</maven>
+	</prerequisites>
+
+    <parent>
+		<groupId>team.supernova.hubble</groupId>
+		<artifactId>hubble</artifactId>
+		<version>0.6-SNAPSHOT</version>
+    </parent>
+
+	<artifactId>hubble-integrationtests</artifactId>
+	<version>0.6-SNAPSHOT</version>
+	<name>Hubble integration test base classes</name>
+    <description>>Base classes to create tests for hubble on a specific Cassandra database</description>
+	<packaging>jar</packaging>
+
+	<dependencies>
+        <dependency>
+            <groupId>team.supernova.hubble</groupId>
+            <artifactId>hubble-core</artifactId>
+			<version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>team.supernova.hubble</groupId>
+            <artifactId>hubble-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>${scala.version}</version>
+            <scope>compile</scope>
+        </dependency>
+		<dependency>
+			<groupId>com.datastax.cassandra</groupId>
+			<artifactId>cassandra-driver-core</artifactId>
+			<version>${cassandra.version}</version>
+			<scope>test</scope>
+		</dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-testkit_2.11</artifactId>
+            <version>${akkatestkit.version}</version>
+            <scope>test</scope>
+        </dependency>
+	</dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jar</goal>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

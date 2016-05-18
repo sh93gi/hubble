@@ -1,18 +1,24 @@
-package team.supernova
+package team.supernova.testsuites
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
+import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
-import org.scalatest.{FunSpecLike, Matchers}
-import team.supernova.cassandra.{CassandraClusterApi, ClusterEnv}
+import team.supernova.cassandra.{ClusterEnv, CassandraClusterApi, CassandraClusterGroupFixture, ClusterConnectorFixture}
 
 
-class CassandraClusterInfoSpec
+abstract class CassandraClusterInfoSpecBase
   extends TestKit(ActorSystem("CassandraClusterInfoSpec"))
   with FunSpecLike
   with ClusterConnectorFixture
   with CassandraClusterGroupFixture{
-  val clusterInstance: ClusterEnv = cassandragroup.head.envs.last // small cluster, such that clusterinfo is fast
+
+  /**
+    * A cluster instance from which the metadata will be retrieved. Smaller ones are faster.
+    * Example value: cassandragroup.head.envs.last
+    * @return
+    */
+  override def clusterInstance: ClusterEnv
 
   describe("Cassandra info retriever"){
     it  ("should connect") {

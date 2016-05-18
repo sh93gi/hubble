@@ -1,19 +1,28 @@
-package team.supernova
+package team.supernova.testsuites
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
-import team.supernova.cassandra.{CassandraSlowQueryApi, ClusterEnv, SlowQuery}
+import team.supernova._
+import team.supernova.cassandra._
 
 import scala.collection.mutable.ArrayBuffer
 
-class CassandraSlowQuerySpec
+abstract class CassandraSlowQueryAvailableSpecBase
   extends TestKit(ActorSystem("CassandraPerformanceSpec"))
     with FunSpecLike
     with ClusterConnectorFixture
     with CassandraClusterGroupFixture {
-  val clusterInstance: ClusterEnv = cassandragroup.head.envs.head // one with dse_perf keyspace
+
+  def clusterInstance: ClusterEnv = clusterEnvWithSlowQueries
+
+  /**
+    * A ClusterEnv which has a dse_perf.node_slow_log table with some rows
+    * Example value: cassandragroup.head.envs.head
+    * @return
+    */
+  def clusterEnvWithSlowQueries : ClusterEnv
 
   describe("Cassandra slow query analyzer") {
     it("should have slow query columnfamily") {
@@ -30,7 +39,7 @@ class CassandraSlowQuerySpec
       using(newSession()) { session =>
         new CassandraSlowQueryApi(clusterInstance).foreach(Some(50))(queryDetails => {
           queryDetails.commands.size should be > 0
-          queryDetails.duration should be >= 0L
+          queryDetails.duration should be > 0L
           queryDetails.keyspaces.size should be > 0
           queryDetails.tables.size should be > 0
         })

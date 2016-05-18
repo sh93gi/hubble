@@ -1,7 +1,6 @@
-package team.supernova
+package team.supernova.cassandra
 
 import com.datastax.driver.core.Session
-import team.supernova.cassandra.{ClusterEnv, ClusterEnvConnector}
 
 /**
   * Provides session factory method, requires a cluster instance to connect to

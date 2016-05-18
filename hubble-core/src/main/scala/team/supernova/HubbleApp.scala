@@ -16,13 +16,14 @@ import scala.collection.JavaConverters._
 
 object HubbleApp extends App {
 
+
   val system = ActorSystem("ClusterInfo")
   val TOKEN = ConfluenceToken.getConfluenceToken(system.settings.config)
 
   startScheduleEveryDay()
 
   def startScheduleEveryDay() = {
-    val SPACE = system.settings.config.getString("hubble.confluence.space")
+    val SPACE = mapConfigToConfluenceSpace(system.settings.config)
 
     val clusters = mapConfigToCassandraClusterGroup(system.settings.config)
     val app = system.actorOf(HubbleActor.props(SPACE, TOKEN, system))
@@ -37,6 +38,7 @@ object HubbleApp extends App {
     } yield (key, value)).toMap
   }
 
+  def mapConfigToConfluenceSpace(config: Config) = config.getString("hubble.confluence.space")
 
   def mapConfigToClusterEnv(graphiteConfig: GraphiteConfig, pr: Config): ClusterEnv = {
     new ClusterEnv(pr.getString("cluster_name"),

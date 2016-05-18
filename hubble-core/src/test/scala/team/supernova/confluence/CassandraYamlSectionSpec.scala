@@ -51,18 +51,13 @@ class CassandraYamlSectionSpec
     }
 
     describe("presentYamlShort"){
-      it("should print something"){
+      it("should contain the provided yaml elements"){
         val content = CassandraYamlSection.presentYamlShort(Some(CassandraYaml(Map(("a", 1), ("b",2))))).toString()
         content should include ("\"a\" : 1")
+        content should include ("\"b\" : 2")
       }
     }
 
-    describe("presentYamlCompare"){
-      it("should print something"){
-        val content = CassandraYamlSection.presentYamlShort(Some(CassandraYaml(Map(("a", 1), ("b",2))))).toString()
-        content should include ("\"a\" : 1")
-      }
-    }
   }
 
 }
