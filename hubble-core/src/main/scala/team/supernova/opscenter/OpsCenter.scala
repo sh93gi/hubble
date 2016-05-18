@@ -10,8 +10,7 @@ object OpsCenter {
   val readTimeout = 20000
   val connTimeout = 10000
 
-  class Log{}
-  val log = LoggerFactory.getLogger(classOf[Log])
+  val log = LoggerFactory.getLogger(OpsCenter.getClass)
 
   def tryNodeNames(host: String, login: Login, clusterName: String): Try[List[String]] = {
     import org.json4s._
