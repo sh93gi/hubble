@@ -4,6 +4,7 @@ import com.datastax.driver.core._
 import team.supernova.cassandra.{ClusterEnv, ClusterSlowQueries}
 import team.supernova.checks._
 import team.supernova.graphite.MetricResult
+import team.supernova.opscenter.{OpsCenterClusterInfo, OpsCenterNode}
 
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet

@@ -1,4 +1,4 @@
-package team.supernova.domain
+package team.supernova.opscenter
 
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -9,31 +9,7 @@ import org.json4s.jackson.JsonMethods._
  */
 
 
-object CassandraYaml {
-    def parseBody (body: String) = {
-        implicit val formats = DefaultFormats
-        parse(body).extract[CassandraYaml]
-    }
-}
 
-case class CassandraYaml (authenticator                     : Option[String],
-                          authority                         : Option[String],
-                          auto_snapshot                     : Option[Boolean],
-                          cluster_name                      : Option[String],
-                         //..
-                          concurrent_reads                  : Option[Int],
-                          concurrent_writes                 : Option[Int] ) {
-}
-
-
-case class Login (sessionid: String) {}
-
-object Login {
-    def parseLogin (body: String) = {
-        implicit val formats = DefaultFormats
-        parse(body).extract[Login]
-    }
-}
 
 
 

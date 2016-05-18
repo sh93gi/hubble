@@ -1,9 +1,9 @@
 package team.supernova.actor.collect
 
-import akka.actor.{ActorLogging, Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.datastax.driver.core.Metadata
-import team.supernova.OpsCenterClusterInfo
-import team.supernova.cassandra.{OpsCenterApi, ClusterEnv}
+import team.supernova.cassandra.{ClusterEnv, OpsCenterApi}
+import team.supernova.opscenter.OpsCenterClusterInfo
 
 object OpsCenterClusterInfoActor{
   case class StartWorkOnCluster(cluster: ClusterEnv, meta: Metadata, group: String)

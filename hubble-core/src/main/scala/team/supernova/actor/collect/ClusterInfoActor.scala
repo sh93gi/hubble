@@ -2,9 +2,10 @@ package team.supernova.actor.collect
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.datastax.driver.core.Metadata
+import team.supernova.ClusterInfo
 import team.supernova.cassandra.{ClusterEnv, ClusterSlowQueries}
 import team.supernova.graphite.MetricResult
-import team.supernova.{ClusterInfo, OpsCenterClusterInfo}
+import team.supernova.opscenter.OpsCenterClusterInfo
 
 import scala.collection.mutable
 

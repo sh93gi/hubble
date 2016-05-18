@@ -15,15 +15,18 @@ class CassandraSlowQueryUnavailableSpec
   with CassandraClusterGroupFixture {
 
   val clusterInstance: ClusterEnv = cassandragroup.head.envs.last // one without dse_perf keyspace
+
   describe("Cassandra slow query analyzer on cluster without dse_perf keyspace") {
-    it("should NOT have slow query columnfamily") {
+    ignore("all clusters have dse_perf now")(it("should NOT have slow query columnfamily") {
       new CassandraSlowQueryApi(clusterInstance).hasSlowQueryData() should be (false)
     }
+    )
 
-    it("should NOT find slow queries") {
+    ignore("all clusters have dse_perf now")(it("should NOT find slow queries") {
       val all = ArrayBuffer[SlowQuery]()
       new CassandraSlowQueryApi(clusterInstance).foreach(None)(all.+=(_))
       all.size should be (0)
     }
+    )
   }
 }
