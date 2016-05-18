@@ -3,6 +3,7 @@ package team.supernova
 import com.datastax.driver.core._
 import team.supernova.cassandra.{ClusterEnv, ClusterSlowQueries}
 import team.supernova.checks._
+import team.supernova.graphite.MetricResult
 
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet
@@ -204,6 +205,7 @@ case class NodeHost(host: Host, opsCenterNode: Option[OpsCenterNode]) extends Or
 case class ClusterInfo(val metaData: Metadata,
                        val slowQueries: ClusterSlowQueries,
                        val opsCenterClusterInfo: Option[OpsCenterClusterInfo],
+                       val metrics: List[MetricResult],
                        cluster: ClusterEnv, group: String)
   extends Checkable with Ordered[ClusterInfo] {
 

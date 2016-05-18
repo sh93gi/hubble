@@ -32,8 +32,25 @@ hubble {
     space = the Confluence space where you want to write the pages to (e.g. "CASSANDRA")
   }
   graphite{
-    username = the http authentication username to use for graphite testing
-    password = the http authentication password to use for graphite testing
-    url_template = the string template in which '${key}' will be replaced by value's defined in the hubble.cassandra.clusters.graphite dictionary
+    plot{
+      header = the header to show above the graph, created using the following url template
+      url_template = the string template in which '${key}' will be replaced by value's defined in the hubble.cassandra.clusters.graphite dictionary.
+                     The result will be used on the cluster confluence pages as an image source
+    }
+    username = the user used for http authorizing to graphite for metric retrieval and graphite testing (to verify if templates are valid)
+    password = the passoword for http authorizing to graphite for metric retrieval (to verify if templates are valid)
+    metrics = [
+        {
+            name =    the name of the metric, used to show it in results/messages, the code appends "&rawData=true" to the url
+            url =     the graphite url template, in which '${key}' will be replaced by the corresponding value defined in the hubble.cassandra.clusters.graphite map
+            func =    optional string identifier of the aggregation function
+                      one of {"max","min","avg","delta"}
+                      delta takes last - first value
+                      the function is applied to each serie returned by graphite to obtain one value per serie
+                      subsequently, the function is applied to all series, to obtain one value for this metric
+            format =  optional string identifier of the value formatting function
+                      default is the toString method, alternatively one can use 'bytecount' to get TB/GB/MB/KB
+        }
+    ]
   }
 }

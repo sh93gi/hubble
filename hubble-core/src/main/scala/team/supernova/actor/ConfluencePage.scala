@@ -1,7 +1,7 @@
 package team.supernova.actor
 
 import akka.actor.{Actor, ActorLogging, Props}
-import team.supernova.confluence.GenerateCassandraConfluencePages
+import team.supernova.confluence.ClusterGroupHierarchy
 import team.supernova.confluence.soap.rpc.soap.actions.Token
 import team.supernova.{ClusterInfo, GroupClusters}
 
@@ -24,7 +24,7 @@ class ConfluencePage(space: String, token: Token) extends Actor with ActorLoggin
         map =>
         {
           val allClusters = GroupClusters(SortedSet[ClusterInfo]() ++ map._2)
-          GenerateCassandraConfluencePages.generateGroupConfluencePages(allClusters, space, map._1, token, false)
+          ClusterGroupHierarchy.generateClusterGroupHierarchyPages(allClusters, space, map._1, token, false)
         }
       )
       sender ! ConfluencePage.Done

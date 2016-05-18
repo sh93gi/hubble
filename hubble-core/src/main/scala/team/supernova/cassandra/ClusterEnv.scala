@@ -1,8 +1,10 @@
 package team.supernova.cassandra
 
+import team.supernova.graphite.GraphiteConfig
+
 case class ClusterEnv( cluster_name: String,
                        graphana: String,
-                       graphite_template: String,
+                       graphiteConfig: GraphiteConfig,
                        graphite: Map[String, String],
                        hosts: Array[String],
                        ops_pword: String,

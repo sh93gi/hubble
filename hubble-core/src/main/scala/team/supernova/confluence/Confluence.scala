@@ -12,6 +12,34 @@ import scala.xml.NodeSeq
 
 object Confluence {
 
+  def CONFLUENCE_HEADER (intro: String) = <ac:structured-macro ac:name="section">
+    <ac:rich-text-body>
+      <ac:structured-macro ac:name="column">
+        <ac:parameter ac:name="width">50%</ac:parameter> <ac:rich-text-body>
+        <h1>General information</h1>
+        <ac:structured-macro ac:name="warning">
+          <ac:parameter ac:name="title">GENERATED CODE!!!</ac:parameter>
+          <ac:rich-text-body><p>NB!!! This page is generated based on information from Cassandra. PLEASE DON'T EDIT IT!!!</p></ac:rich-text-body>
+        </ac:structured-macro>
+        <p>{intro}</p>
+      </ac:rich-text-body>
+      </ac:structured-macro> <ac:structured-macro ac:name="column">
+      <ac:parameter ac:name="width">50%</ac:parameter> <ac:rich-text-body>
+        <ac:structured-macro ac:name="panel">
+          <ac:parameter ac:name="title">What's on this page</ac:parameter> <ac:parameter ac:name="borderStyle">solid</ac:parameter> <ac:rich-text-body>
+          <p>
+            <ac:structured-macro ac:name="toc">
+              <ac:parameter ac:name="maxLevel">4</ac:parameter>
+            </ac:structured-macro>
+          </p>
+        </ac:rich-text-body>
+        </ac:structured-macro>
+      </ac:rich-text-body>
+    </ac:structured-macro>
+    </ac:rich-text-body>
+  </ac:structured-macro>
+
+
   def md5hash(s: String) = {
     val m = java.security.MessageDigest.getInstance("MD5")
     val b = s.getBytes("UTF-8")
