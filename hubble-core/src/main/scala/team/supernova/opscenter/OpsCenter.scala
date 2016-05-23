@@ -59,19 +59,19 @@ object OpsCenter {
 
   def tryLogin(host: String, uname: String, pword: String): Try[Login] = {
     //login to OpsCenter and get session id
-    val loginattempt = Try(Http(s"http://$host/login")
+    val loginAttempt = Try(Http(s"http://$host/login")
       .param("username", uname).param("password", pword)
       .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
       .asString.body)
-    loginattempt.flatMap(response => Try(Login.parseLogin(response)))
+    loginAttempt.flatMap(response => Try(Login.parseLogin(response)))
   }
 
   def tryYaml(login: Login, host: String, clusterName: String, node_ip: String): Try[CassandraYaml] = {
-    val nodeconfattempt = Try(Http(s"http://$host/$clusterName/nodeconf/$node_ip")
+    val nodeconfAttempt = Try(Http(s"http://$host/$clusterName/nodeconf/$node_ip")
         .withHeaders(login)
         .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
         .asString.body)
-    nodeconfattempt.flatMap(response => Try(CassandraYaml.parseBody(response)))
+    nodeconfAttempt.flatMap(response => Try(CassandraYaml.parseBody(response)))
   }
 
   def tryMetric(login: Login,
@@ -83,7 +83,7 @@ object OpsCenter {
                 keyspaceName: String,
                 tableName: String,
                 metricName: String): Try[Option[Double]] = {
-    val url = s"http://$host/$clusterName/metrics/$node/${keyspaceName}/$tableName/$metricName?step=120&start=${System.currentTimeMillis / 1000 - 300}&function=max"
+    val url = s"http://$host/$clusterName/metrics/$node/$keyspaceName/$tableName/$metricName?step=120&start=${System.currentTimeMillis / 1000 - 300}&function=max"
     val metricattempt = Try(Http(url)
         .withHeaders(login)
         .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
@@ -122,7 +122,7 @@ object OpsCenter {
                                  listKeyspaceInfo: Map[String, List[String]]
                                 ): Option[OpsCenterClusterInfo] = {
     tryLogin(host, uname, pword)
-      .logFailure(e => log.error("Failed to login on $host for $clusterName: ${e.getMessage()}"))
+      .logFailure(e => log.error(s"Failed to login on $host for $clusterName: ${e.getMessage} ${e.getClass.getCanonicalName}"))
       .logSuccess(_ => log.info(s"Successfully logged in to opscenter for $clusterName"))
       .flatMap(login => {
         tryNodeNames(host, login, clusterName).map(res=>(login, res))
@@ -135,7 +135,7 @@ object OpsCenter {
         //per node
         val listNodes = listNodeIP.map(node_ip => {
           val nodeYaml = tryYaml(login, host, clusterName, node_ip)
-            .logFailure(e => log.error(s"Failed to load node configuration of $node_ip within $clusterName"))
+            .logFailure(e => log.error(s"Failed to load node configuration of $node_ip within $clusterName: ${e.getMessage} ${e.getClass.getCanonicalName}"))
             .toOption
           val keyInfo = getTableSize(login, host, uname, pword, clusterName, listKeyspaceInfo, node_ip)
           new OpsCenterNode(node_ip, nodeYaml, keyInfo)
