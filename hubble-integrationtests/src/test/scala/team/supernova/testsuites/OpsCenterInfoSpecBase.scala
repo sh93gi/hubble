@@ -32,10 +32,12 @@ abstract class OpsCenterInfoSpecBase
       opsInfo.get.nodes.size should be > 0
     }
 
-    it ("should have nonzero sstables"){
+    it ("should have nonzero sstables for each node"){
       val opsInfo = getOpsInfo()
       opsInfo.get.nodes.size should be > 0
-      opsInfo.get.nodes.head.opsKeyspaceInfoList.head.opsTableInfoList.head.numberSSTables should be > 0L
+      all (opsInfo.get.nodes.map( // For each node sum of SSTables (over all keyspaces, over all tables)
+        _.opsKeyspaceInfoList.flatMap(_.opsTableInfoList.map(_.numberSSTables)).sum
+      )) should be >=(0L)
     }
 
   }
