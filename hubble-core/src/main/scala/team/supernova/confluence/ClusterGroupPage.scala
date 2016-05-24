@@ -2,7 +2,8 @@ package team.supernova.confluence
 
 import java.util.Calendar
 
-import team.supernova.{GroupClusters, _}
+import team.supernova.GroupClusters
+import team.supernova.validation.Severity
 
 import scala.collection.SortedSet
 

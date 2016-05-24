@@ -1,6 +1,7 @@
 package team.supernova.confluence
 
-import team.supernova.{ClusterInfo, Keyspace, Table, _}
+import team.supernova.validation.Severity
+import team.supernova.{ClusterInfo, Keyspace, Table}
 
 object KeyspacePage {
 
