@@ -11,7 +11,6 @@
     </parent>
 
 	<artifactId>hubble-integrationtests</artifactId>
-	<version>0.6-SNAPSHOT</version>
 	<name>Hubble integration test base classes</name>
     <description>>Base classes to create tests for hubble on a specific Cassandra database</description>
 	<packaging>jar</packaging>
@@ -19,41 +18,35 @@
 	<dependencies>
         <dependency>
             <groupId>team.supernova.hubble</groupId>
-            <artifactId>hubble-core</artifactId>
-			<version>${project.version}</version>
+            <artifactId>hubble-reporting</artifactId>
         </dependency>
         <dependency>
             <groupId>team.supernova.hubble</groupId>
             <artifactId>hubble-core</artifactId>
-            <version>${project.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-compiler</artifactId>
-            <version>${scala.version}</version>
-            <scope>compile</scope>
+            <groupId>team.supernova.hubble</groupId>
+            <artifactId>hubble-core</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
 		<dependency>
 			<groupId>com.datastax.cassandra</groupId>
 			<artifactId>cassandra-driver-core</artifactId>
-			<version>${cassandra.version}</version>
 			<scope>test</scope>
 		</dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-testkit_2.11</artifactId>
-            <version>${akkatestkit.version}</version>
             <scope>test</scope>
         </dependency>
 	</dependencies>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.6</version>
                 <executions>
                     <execution>
                         <goals>
