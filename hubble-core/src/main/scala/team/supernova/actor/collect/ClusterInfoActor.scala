@@ -7,6 +7,7 @@ import team.supernova.cassandra.{ClusterEnv, ClusterSlowQueries}
 import team.supernova.graphite.MetricResult
 import team.supernova.opscenter.OpsCenterClusterInfo
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 object ClusterInfoActor {
@@ -123,8 +124,12 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
       } else {
         log.info(s"Finished collecting all information of $key, ")
         try {
+          val metaDataValue = metaElement.get.get
           val result = new ClusterInfo(
-            metaElement.get.get,
+            metaDataValue.getClusterName,
+            metaDataValue.checkSchemaAgreement(),
+            metaDataValue.getAllHosts.asScala.toSet,
+            metaDataValue.getKeyspaces.asScala.toList,
             slowQueryElement.get,
             opsInfoElement.get,
             graphiteElement.get,

@@ -2,7 +2,7 @@ package team.supernova.users
 
 import org.scalatest.{FunSpecLike, Matchers}
 
-class UserChecksSpec extends FunSpecLike with Matchers {
+class UserNameValidatorSpec extends FunSpecLike with Matchers {
 
   describe("User naming checks") {
     it("should fail for both upper case chars and suffix checks") {
@@ -10,7 +10,7 @@ class UserChecksSpec extends FunSpecLike with Matchers {
 
       val checks = UserNameValidator.namingConventionChecks(userNames)
 
-      checks.size should be(2)
+      checks.count(_.hasPassed == false) should be(2)
     }
 
     it("should fail for both upper case chars and suffix checks 2") {
@@ -18,7 +18,7 @@ class UserChecksSpec extends FunSpecLike with Matchers {
 
       val checks = UserNameValidator.namingConventionChecks(userNames)
 
-      checks.size should be(2)
+      checks.count(_.hasPassed == false) should be(2)
     }
 
     it("should fail for suffix checks") {
@@ -26,7 +26,7 @@ class UserChecksSpec extends FunSpecLike with Matchers {
 
       val checks = UserNameValidator.namingConventionChecks(userNames)
 
-      checks.size should be(1)
+      checks.count(_.hasPassed == false) should be(1)
     }
 
     it("should be successful") {
@@ -34,7 +34,7 @@ class UserChecksSpec extends FunSpecLike with Matchers {
 
       val checks = UserNameValidator.namingConventionChecks(userNames)
 
-      checks.size should be(0)
+      checks.count(_.hasPassed == false) should be(0)
     }
 
     it("should be successful 2") {
@@ -42,7 +42,7 @@ class UserChecksSpec extends FunSpecLike with Matchers {
 
       val checks = UserNameValidator.namingConventionChecks(userNames)
 
-      checks.size should be(0)
+      checks.count(_.hasPassed == false) should be(0)
     }
 
     it("Should be successful 3") {
@@ -50,7 +50,7 @@ class UserChecksSpec extends FunSpecLike with Matchers {
 
       val checks = UserNameValidator.keyspaceUserChecks(userNames,"ideal")
 
-      checks.size should be(0)
+      checks.count(_.hasPassed == false) should be(0)
     }
 
     it("Should be missing ideal_owner") {
@@ -58,9 +58,9 @@ class UserChecksSpec extends FunSpecLike with Matchers {
 
       val checks = UserNameValidator.keyspaceUserChecks(userNames,"ideal")
 
-      checks.size should be(1)
+      checks.count(_.hasPassed == false) should be(1)
 
-      checks.head.details.contains("ideal_owner") should be(true)
+      checks.filter(_.hasPassed == false).head.details.contains("ideal_owner") should be(true)
 
     }
   }

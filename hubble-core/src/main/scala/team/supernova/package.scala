@@ -4,7 +4,7 @@ import com.datastax.driver.core.exceptions.ReadTimeoutException
 import org.slf4j.LoggerFactory
 
 package object supernova {
-  val logger = LoggerFactory.getLogger(this.getClass)
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   def using[A <: { def close(): Unit }, B](param: A)(f: A => B): B =
     try {

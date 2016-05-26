@@ -1,6 +1,7 @@
 package team.supernova
 
 import com.datastax.driver.core._
+import org.slf4j.LoggerFactory
 import team.supernova.cassandra.{ClusterEnv, ClusterSlowQueries}
 import team.supernova.graphite.MetricResult
 import team.supernova.opscenter.{OpsCenterClusterInfo, OpsCenterNode}
@@ -183,22 +184,26 @@ case class NodeHost(host: Host, opsCenterNode: Option[OpsCenterNode]) extends Or
   // TODO add opsCenter Info and warnings!
 }
 
-case class ClusterInfo(metaData: Metadata,
+case class ClusterInfo(cluster_name : String,
+                       schemaAgreement: Boolean,
+                       allHosts : Set[Host],
+                       keyspacesList : List[KeyspaceMetadata],
                        slowQueries: ClusterSlowQueries,
                        opsCenterClusterInfo: Option[OpsCenterClusterInfo],
                        metrics: List[MetricResult],
                        users: Set[String],
-                       cluster: ClusterEnv, group: String)
+                       cluster: ClusterEnv,
+                       group: String)
   extends Checkable with Ordered[ClusterInfo] {
 
-  val cluster_name = metaData.getClusterName
-  val schemaAgreement = metaData.checkSchemaAgreement()
-  val dataCenter: SortedSet[String] = metaData.getAllHosts.groupBy(h => h.getDatacenter).keys.to
-  val keyspaces: SortedSet[Keyspace] = metaData.getKeyspaces.map(i => {
+  val logger  = LoggerFactory.getLogger(this.getClass)
+
+  lazy val dataCenter: SortedSet[String] = allHosts.groupBy(h => h.getDatacenter).keys.to
+  lazy val keyspaces: SortedSet[Keyspace] = keyspacesList.map(i => {
     new Keyspace(i, dataCenter, Some(users))
   }).to
 
-  val hosts = metaData.getAllHosts.map {
+  lazy val hosts = allHosts.map {
     h => new NodeHost(h,
       opsCenterClusterInfo.flatMap {
         a => a.nodes.find(n => n.name.equals(h.getSocketAddress.getAddress.getHostAddress))
@@ -209,20 +214,21 @@ case class ClusterInfo(metaData: Metadata,
   // TODO implement compare keyspaces - one cluster to another
 
 
-  private val userNamingChecks = UserNameValidator.namingConventionChecks(users)
+  private lazy val userNamingChecks = UserNameValidator.namingConventionChecks(users)
 
-  val myChecks: List[Check] = List(
+  lazy val myChecks: List[Check] = List(
     Check("Cluster agreement check", s"$cluster_name schema agreement issues!", schemaAgreement, Severity.ERROR)
     //TODO add user naming conventions check here.
   ) ++ userNamingChecks
 
-  val children = keyspaces.toList
+  lazy val children = keyspaces.toList
 
   def compare(that: ClusterInfo): Int = {
-    println (s"${this.cluster_name} compared to ${that.cluster_name}  = ${(this.cluster.sequence.toString compare that.cluster.sequence.toString) + this.group compare that.group} ")
-    (this.cluster.sequence.toString compare that.cluster.sequence.toString) + this.group compare that.group
+    val result = if(this.group == that.group) this.cluster.sequence compare that.cluster.sequence
+    else this.group compare that.group
+    logger.debug(s"${this.cluster_name} compared to ${that.cluster_name}  = $result ")
+    result
   }
-
 }
 
 case class GroupClusters(clusterInfoList: SortedSet[ClusterInfo]) {
@@ -230,7 +236,7 @@ case class GroupClusters(clusterInfoList: SortedSet[ClusterInfo]) {
   val checks: List[Check] = {
     val clusterChecks = List(
       // TODO check naming conventions of DC names
-      Check("Check DC names TODO", s"FIXME!", true, Severity.WARNING)
+      Check("Check DC names TODO", s"FIXME!", hasPassed = true, Severity.WARNING)
     )
     clusterInfoList.foldLeft(clusterChecks) { (acc, clust) => acc ++ clust.checks }
   }
