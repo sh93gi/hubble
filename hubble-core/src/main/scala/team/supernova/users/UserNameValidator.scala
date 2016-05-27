@@ -1,56 +1,46 @@
 package team.supernova.users
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import team.supernova.validation.{Check, Severity}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
+import scala.util.matching.Regex
 
 object UserNameValidator {
 
-  val userNameSuffixesPath = "hubble.cassandra.username_suffixes"
-  //TODO read these from properties file
-  private val userNameSuffixes: Set[String] = ConfigFactory.load().getStringList(userNameSuffixesPath).asScala.toSet
+  // Config read
+  private val config: Config = ConfigFactory.load()
+  private val userNameSuffixesPath: String = "hubble.cassandra.username_suffixes"
+  private val userNameRegexPath: String = "hubble.cassandra.username_regex"
+  private val userNameSuffixes: Set[String] = config.getStringList(userNameSuffixesPath).asScala.toSet
+  private val userNameRegex: Regex = config.getString(userNameRegexPath).r
 
-  private def upperCaseInNameWarning(name: String) = s"Username '$name' has upper case characters in it"
+  private val userNameSuffixesString = userNameSuffixes.mkString(", ") // we do not want to build this string for each warning message
 
-  private def userNameSuffixWarning(name: String) = s"Username '$name' should end with one of the suffixes : $userNameSuffixes"
+  private def userNameSuffixWarning(name: String): String = s"Username '$name' should end with one of the suffixes : $userNameSuffixesString"
 
-  private def requiredNameWarning(requiredName: String) = s"Username '$requiredName' is missing."
+  private def upperCaseInNameWarning(name: String): String = s"Username '$name' has upper case characters in it"
 
-  private def hasUpperCaseLetter(name: String): Boolean = name.toLowerCase != name
+  private def requiredNameWarning(requiredName: String): String = s"Username '$requiredName' is missing."
 
-  private def endsWithConvention(name: String): Boolean = userNameSuffixes.count(suffix => name.endsWith(suffix)) > 0
+  private val namingConventionCheckName: String = "User naming convention check"
 
-  def namingConventionChecks(userNames: Set[String]): List[Check] = {
+  def namingConventionChecks(userNames: Set[String]): List[Check] = userNames.flatMap { name =>
+    List[Check](
+      Check(namingConventionCheckName, upperCaseInNameWarning(name), matchesRegex(name), Severity.WARNING),
+      Check(namingConventionCheckName, userNameSuffixWarning(name), endsWithConvention(name), Severity.WARNING)
+    )
+  }.toList.sortBy(c => c.details)
 
-    def userNamingConventionWarning(warningMessage: String): Check = {
-      Check("User naming convention check", warningMessage, hasPassed = false, Severity.WARNING)
-    }
+  private def matchesRegex(name: String): Boolean = userNameRegex findFirstIn name isDefined
 
-    val checkResults = userNames.flatMap {
-      name =>
-        val checks = new ListBuffer[Check]
-        //Check if there is uppercase letter in it
-        if (hasUpperCaseLetter(name)) checks += userNamingConventionWarning(upperCaseInNameWarning(name))
-        //Check if the user name ends with one of the legal suffixes. See userNameSuffixes
-        if (!endsWithConvention(name)) checks += userNamingConventionWarning(userNameSuffixWarning(name))
-        checks
-    }
+  private def endsWithConvention(name: String): Boolean = userNameSuffixes.exists(name.endsWith)
 
-    checkResults.toList.sortBy(c => c.details)
-  }
+  private val missingUserNameCheckName: String = "Missing username check"
 
-  def keyspaceUserChecks(userNames: Set[String], keyspaceName: String): List[Check] = {
-
-    def buildRequiredUsersListPerKeyspace(keyspaceName: String): Set[String] = {
-      userNameSuffixes.map(suffix => keyspaceName + suffix)
-    }
-
-    val requiredUserNames = buildRequiredUsersListPerKeyspace(keyspaceName)
-    requiredUserNames.map { name =>
-      if (!userNames.contains(name)) Check("Missing username check", requiredNameWarning(name), hasPassed = false, Severity.WARNING)
-      else Check("Missing username check", requiredNameWarning(name), hasPassed = true, Severity.WARNING)
+  def keyspaceUserChecks(userNames: Set[String], keyspaceName: String): List[Check] = userNameSuffixes.map { suffix =>
+      val requiredName = keyspaceName + suffix
+      Check(missingUserNameCheckName, requiredNameWarning(requiredName), userNames.contains(requiredName), Severity.WARNING)
     }.toList
-  }
+
 }
