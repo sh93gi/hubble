@@ -10,14 +10,13 @@ import org.slf4j.LoggerFactory
 import team.supernova.{retryExecute, using}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
 
 class CassandraSlowQueryApi(cluster: ClusterEnv) {
   val log = LoggerFactory.getLogger(classOf[CassandraSlowQueryApi])
 
   private def newSession() = new ClusterEnvConnector(cluster).connect()
 
-  def hasSlowQueryData(): Boolean = {
+  def hasSlowQueryData: Boolean = {
     using(newSession()) {
       session => {
         hasSlowQueryData(session)
@@ -32,20 +31,22 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
         retries = 3,
         command = session.execute(query).asScala
       )
-      if (dsePerformanceCount.head.getLong(0)==0)
-        return false
-      queryNodeSlowLog(session, Some(1), _=>{})  // Verify if table can be queried without exceptions (permissions)
-      return true
+
+      if(dsePerformanceCount.nonEmpty && dsePerformanceCount.head.getLong(0) > 0) {
+        queryNodeSlowLog(session, Some(1), _=>{}) // Verify if table can be queried without exceptions (permissions)
+        true
+      } else false
+
     } catch {
       case e: QueryTimeoutException =>
         log.warn(s"Got timeout querying system.schema_columnfamilies: ${e.getMessage}")
-        return false
+        false
       case e: ConnectionException =>
         log.warn(s"Got connectionexception while determining availability of node_slow_log: ${e.getMessage}")
-        return false
+        false
       case e: UnauthorizedException =>
         log.warn(s"The dse_perf.node_slow_log exists but the user used by hubble is unauthorized to read from it: ${e.getMessage}")
-        return false
+        false
     }
   }
 
@@ -99,8 +100,6 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
     // After all requested days for all available nodes, throw exception if not all data could be retrieved
     failed.foreach(throw _) //Rethrow exception if at least one occurred
   }
-}
-
   def getNodes(session: Session): Seq[InetAddress] = {
     session.execute("select peer from system.peers;").all().asScala.map(_.getInet("peer"))
   }
