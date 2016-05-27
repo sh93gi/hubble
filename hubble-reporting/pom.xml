@@ -11,7 +11,6 @@
     </parent>
 
 	<artifactId>hubble-reporting</artifactId>
-	<version>0.6-SNAPSHOT</version>
 	<name>Reporting module for Hubble</name>
 	<packaging>jar</packaging>
 
@@ -23,19 +22,9 @@
             <version>1.0.6</version>
         </dependency>
         <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>3.10-FINAL</version>
-        </dependency>
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>${scala.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe</groupId>
@@ -43,10 +32,9 @@
             <version>1.2.1</version>
         </dependency>
 	</dependencies>
+
     <build>
         <plugins>
-
-
         </plugins>
     </build>
 </project>

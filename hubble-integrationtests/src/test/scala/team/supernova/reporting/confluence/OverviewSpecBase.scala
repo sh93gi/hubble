@@ -1,18 +1,13 @@
 package team.supernova.reporting.confluence
 
-import java.util.Properties
-
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
+import team.supernova.HubbleApp
 
-/**
- * Created by Gary Stewart on 4-8-2015.
- *
- */
-class OverviewSpec extends FunSpecLike {
+abstract class OverviewSpecBase extends FunSpecLike {
 
   val config = ConfigFactory.load()
-  val space = config.getString("hubble.confluence.space")
+  val space = HubbleApp.mapConfigToConfluenceSpace(config)
 
    it  ("Confluence Test gen List") {
      Overview.generateList (ConfluenceToken.getConfluenceToken (config), space )
