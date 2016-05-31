@@ -12,40 +12,52 @@ import team.supernova.{retryExecute, using}
 import scala.collection.JavaConverters._
 
 class CassandraSlowQueryApi(cluster: ClusterEnv) {
-  val log =LoggerFactory.getLogger(classOf[CassandraSlowQueryApi])
-  def newSession() = new ClusterEnvConnector(cluster).connect()
+  val log = LoggerFactory.getLogger(classOf[CassandraSlowQueryApi])
 
-    def hasSlowQueryData(): Boolean = {
-      using(newSession()){
-        session =>{
-          try{
-            val dsePerformanceCount = retryExecute(
-              {session.execute("select count(*) from system.schema_columnfamilies where keyspace_name='dse_perf' and columnfamily_name='node_slow_log';").asScala},
-              3)
-            if (dsePerformanceCount.head.getLong(0)==0)
-              return false
-            queryNodeSlowLog(session, Some(1), _=>{})  // Verify if table can be queried without exceptions (permissions)
-            return true
-          }catch{
-            case e: QueryTimeoutException =>
-              log.error(s"Got timeout querying system.schema_columnfamilies: ${e.getMessage}")
-              return false
-            case e: ConnectionException =>
-              log.error(s"Got connectionexception while determining availability of node_slow_log: ${e.getMessage}")
-              return false
-            case e: UnauthorizedException =>
-              log.warn(s"The dse_perf.node_slow_log exists but the user used by hubble is unauthorized to read from it: ${e.getMessage}")
-              return false
-          }
-        }
+  private def newSession() = new ClusterEnvConnector(cluster).connect()
+
+  def hasSlowQueryData: Boolean = {
+    using(newSession()) {
+      session => {
+        hasSlowQueryData(session)
       }
     }
+  }
+
+  private def hasSlowQueryData(session: Session): Boolean = {
+    try {
+      val query = "select count(*) from system.schema_columnfamilies where keyspace_name='dse_perf' and columnfamily_name='node_slow_log';"
+      val dsePerformanceCount = retryExecute(
+        retries = 3,
+        command = session.execute(query).asScala
+      )
+
+      if(dsePerformanceCount.nonEmpty && dsePerformanceCount.head.getLong(0) > 0) {
+        queryNodeSlowLog(session, Some(1), _=>{}) // Verify if table can be queried without exceptions (permissions)
+        true
+      } else false
+
+    } catch {
+      case e: QueryTimeoutException =>
+        log.warn(s"Got timeout querying system.schema_columnfamilies: ${e.getMessage}")
+        false
+      case e: ConnectionException =>
+        log.warn(s"Got connectionexception while determining availability of node_slow_log: ${e.getMessage}")
+        false
+      case e: UnauthorizedException =>
+        log.warn(s"The dse_perf.node_slow_log exists but the user used by hubble is unauthorized to read from it: ${e.getMessage}")
+        false
+    }
+  }
+
+  def foreach(op: (SlowQuery) => Unit): Unit = foreach(None)(op)
+
+  def foreach(limit: Int)(op: (SlowQuery) => Unit): Unit = foreach(Some(limit))(op)
 
   def foreach(limit: Option[Int])(op: (SlowQuery)=>Unit) : Unit = {
-    if(!hasSlowQueryData()){
-      return
+    using(newSession()) { session =>
+      if(hasSlowQueryData(session)) queryNodeSlowLog(session, limit, op)
     }
-    using(newSession()) { session => queryNodeSlowLog(session, limit, op)}
   }
 
   def queryNodeSlowLog(session: Session, limit: Option[Int], op: (SlowQuery) => Unit): Unit = {
@@ -57,7 +69,7 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
       s"WHERE node_ip=? " +
       s"AND date=? " +
       s"$limit_text;")
-    val nodes = session.execute("select peer from system.peers;").all().asScala.map(_.getInet("peer"))
+    val nodes = getNodes(session)
     var failed: Option[Throwable] = None
     for (offset <- 0 to 7) {
       val midnight = CassandraDateTime.toMidnight(new DateTime().minusDays(offset)).toDate
@@ -87,5 +99,8 @@ class CassandraSlowQueryApi(cluster: ClusterEnv) {
     }
     // After all requested days for all available nodes, throw exception if not all data could be retrieved
     failed.foreach(throw _) //Rethrow exception if at least one occurred
+  }
+  def getNodes(session: Session): Seq[InetAddress] = {
+    session.execute("select peer from system.peers;").all().asScala.map(_.getInet("peer"))
   }
 }

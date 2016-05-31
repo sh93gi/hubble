@@ -1,6 +1,7 @@
 package team.supernova.confluence
 
-import team.supernova.{ClusterInfo, _}
+import team.supernova.ClusterInfo
+import team.supernova.validation.Severity
 
 import scala.collection.SortedSet
 

@@ -15,6 +15,6 @@ class OpsCenterApi(cluster: ClusterEnv) {
       new Keyspace(i, dataCenter)
     }).to
     val opsKeyInfo: Map[String, List[String]]  = keyspaces.foldLeft(Map[String, List[String]]()){ (a,b) => a ++ Map( b.keyspace_name -> b.tables.map(_.table_name) ) }
-    OpsCenter.gatherOpsCenterClusterInfo(cluster.opscenter, cluster.ops_uname, cluster.ops_pword, metaData.getClusterName(), opsKeyInfo )
+    OpsCenter.gatherOpsCenterClusterInfo(cluster.opscenter, cluster.ops_uname, cluster.ops_pword, metaData.getClusterName, opsKeyInfo )
     }
 }

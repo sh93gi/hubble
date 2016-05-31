@@ -34,7 +34,7 @@ abstract class CassandraSlowQueryUnavailableSpecBase
 
     it("should NOT find slow queries") {
       val all = ArrayBuffer[SlowQuery]()
-      Try(new CassandraSlowQueryApi(clusterInstance).foreach(None)(all.+=(_))) // For some high nr of days ago we will get timeouts
+      Try(new CassandraSlowQueryApi(clusterInstance).foreach(all.+=(_))) // For some high nr of days ago we will get timeouts
       all.size should be (0)
     }
   }

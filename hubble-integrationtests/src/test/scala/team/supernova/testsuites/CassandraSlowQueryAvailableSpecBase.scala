@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import org.scalatest.FunSpecLike
 import org.scalatest.Matchers._
+import team.supernova._
 import team.supernova.cassandra._
 
 import scala.collection.mutable.ArrayBuffer
@@ -32,14 +33,14 @@ abstract class CassandraSlowQueryAvailableSpecBase
 
     it("should find slow queries") {
       val all = ArrayBuffer[SlowQuery]()
-      Try(new CassandraSlowQueryApi(clusterInstance).foreach(Some(50))(all.+=(_))) // For some high nr of days ago we will get timeouts
+      Try(new CassandraSlowQueryApi(clusterInstance).foreach(50)(all.+=(_))) // For some high nr of days ago we will get timeouts
       all.size should be > 0
       all.size should be <= 50
     }
 
     it("rows should be transformable to slowqueries") {
       Try( // For some high nr of days ago we will get timeouts
-        new CassandraSlowQueryApi(clusterInstance).foreach(Some(50))(queryDetails => {
+        new CassandraSlowQueryApi(clusterInstance).foreach(50)(queryDetails => {
           queryDetails.commands.size should be > 0
           queryDetails.duration should be > 0L
           queryDetails.keyspaces.size should be > 0

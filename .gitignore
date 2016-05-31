@@ -58,3 +58,6 @@ hubble-core/pom.xml.releaseBackup
 hubble-reporting/pom.xml.releaseBackup
 pom.xml.releaseBackup
 release.properties
+
+# scala worksheets
+*.sc

@@ -1,29 +1,14 @@
 package team.supernova.confluence
 
-import java.util.Calendar
-
 import team.supernova._
-import team.supernova.cassandra.{ClusterSlowQueries, SlowQuery}
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
-import team.supernova.graphite.StringTemplate
-
-import scala.collection.SortedSet
-import scala.xml.NodeSeq
 
 /**
  * Created by Gary Stewart on 4-8-2015.
  *
  */
 object ClusterGroupHierarchy {
-
-
-
-
-
-
-
-
 
   //TODO create Cluster page if not exits and group page if does not exist!
   //TODO CHeck if gets updated the first ever time

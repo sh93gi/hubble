@@ -1,4 +1,4 @@
 package team.supernova.graphite
 
-case class MetricSource(val url: String)
+case class MetricSource(url: String)
 
