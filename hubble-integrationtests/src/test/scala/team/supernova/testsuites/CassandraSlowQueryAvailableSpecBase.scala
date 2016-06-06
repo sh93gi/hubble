@@ -28,7 +28,7 @@ abstract class CassandraSlowQueryAvailableSpecBase
 
   describe("Cassandra slow query analyzer") {
     it("should have slow query columnfamily") {
-      new CassandraSlowQueryApi(clusterInstance).hasSlowQueryData() should be (true)
+      new CassandraSlowQueryApi(clusterInstance).hasSlowQueryData should be (true)
     }
 
     it("should find slow queries") {

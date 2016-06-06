@@ -28,7 +28,7 @@ abstract class CassandraSlowQueryUnavailableSpecBase
 
   describe("Cassandra slow query analyzer on cluster without dse_perf keyspace") {
     it("should NOT have slow query columnfamily") {
-      new CassandraSlowQueryApi(clusterInstance).hasSlowQueryData() should be (false)
+      new CassandraSlowQueryApi(clusterInstance).hasSlowQueryData should be (false)
     }
 
 
