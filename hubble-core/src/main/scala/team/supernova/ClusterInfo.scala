@@ -232,13 +232,9 @@ case class ClusterInfo(cluster_name : String,
   }
 }
 
-case class GroupClusters(clusterInfoList: SortedSet[ClusterInfo]) {
+case class GroupClusters(clusterInfoList: Seq[ClusterInfo]) {
 
   val checks: List[Check] = {
-    val clusterChecks = List(
-      // TODO check naming conventions of DC names
-      Check("Check DC names TODO", s"FIXME!", hasPassed = true, Severity.WARNING)
-    )
-    clusterInfoList.foldLeft(clusterChecks) { (acc, clust) => acc ++ clust.checks }
+    clusterInfoList.sorted.flatMap(_.checks).toList
   }
 }
