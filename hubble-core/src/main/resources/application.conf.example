@@ -24,6 +24,8 @@ hubble {
               ]
           }
         ]
+     username_regex = the regex the user names need to comply with
+     username_suffixes = the set of user name suffixes that are both expected and required
   }
   confluence {
     user = the user used for connecting to Confluence

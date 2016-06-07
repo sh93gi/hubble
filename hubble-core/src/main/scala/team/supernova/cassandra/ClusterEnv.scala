@@ -1,6 +1,7 @@
 package team.supernova.cassandra
 
 import team.supernova.graphite.GraphiteConfig
+import team.supernova.users.UserNameValidator
 
 case class ClusterEnv( cluster_name: String,
                        graphana: String,
@@ -13,4 +14,5 @@ case class ClusterEnv( cluster_name: String,
                        port: Int,
                        pword: String,
                        uname: String,
-                       sequence: Int)
+                       sequence: Int,
+                       usernameValidator: UserNameValidator)

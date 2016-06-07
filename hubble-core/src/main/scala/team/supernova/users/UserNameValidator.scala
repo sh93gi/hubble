@@ -1,19 +1,17 @@
 package team.supernova.users
 
-import com.typesafe.config.{Config, ConfigFactory}
 import team.supernova.validation.{Check, Severity}
 
-import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 
-object UserNameValidator {
+object UserNameValidator{
+  def apply(nameRegex: Regex, allowed_suffixes: Set[String]): UserNameValidator = {
+    new UserNameValidator(nameRegex, allowed_suffixes)
+  }
+}
 
-  // Config read
-  private val config: Config = ConfigFactory.load()
-  private val userNameSuffixesPath: String = "hubble.cassandra.username_suffixes"
-  private val userNameRegexPath: String = "hubble.cassandra.username_regex"
-  private val userNameSuffixes: Set[String] = config.getStringList(userNameSuffixesPath).asScala.toSet
-  private val userNameRegex: Regex = config.getString(userNameRegexPath).r
+class UserNameValidator(userNameRegex: Regex, userNameSuffixes: Set[String]) {
+
 
   private val userNameSuffixesString = userNameSuffixes.mkString(", ") // we do not want to build this string for each warning message
 

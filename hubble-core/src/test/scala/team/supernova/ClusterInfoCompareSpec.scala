@@ -13,7 +13,7 @@ class ClusterInfoCompareSpec extends FunSpecLike with Matchers {
   }
 
   private def getMockClusterEnv(clusterName: String, sequence: Int): ClusterEnv = {
-    ClusterEnv(clusterName, "", null, Map(), Array(), "", "", "", 1, "", "", sequence)
+    ClusterEnv(clusterName, "", null, Map(), Array(), "", "", "", 1, "", "", sequence, null)
   }
 
   describe("clusterinfo comparison") {

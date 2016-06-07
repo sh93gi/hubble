@@ -125,7 +125,8 @@ case class Link(from: Table, to: Table, on: String)
 
 case class Keyspace(keyspaceMetaData: KeyspaceMetadata,
                     private val validDCnames: SortedSet[String],
-                    users: Option[Set[String]] = None
+                    users: Option[Set[String]] = None,
+                    userNameValidator: Option[UserNameValidator]= None
                    ) extends Checkable with Ordered[Keyspace] {
 
   def compare(that: Keyspace): Int = this.keyspace_name.toLowerCase compare that.keyspace_name.toLowerCase
@@ -156,7 +157,7 @@ case class Keyspace(keyspaceMetaData: KeyspaceMetadata,
   val ignoreKeyspaces: Set[String] = Set("system_auth", "system_traces", "system", "system_admin", "dse_system", "dse_security", "dse_perf", "solr_admin")
   val dcNames = dataCenter.foldLeft("") { (a, w) => a + " '" + w + "'" }
 
-  private val keyspaceUserChecks = if(users.isDefined) UserNameValidator.keyspaceUserChecks(users.get,keyspace_name) else List()
+  private val keyspaceUserChecks = if(users.isDefined && userNameValidator.isDefined) userNameValidator.get.keyspaceUserChecks(users.get, keyspace_name) else List()
 
   val myChecks: List[Check] = List(
     // TODO check DC names are valid
@@ -200,7 +201,7 @@ case class ClusterInfo(cluster_name : String,
 
   lazy val dataCenter: SortedSet[String] = allHosts.groupBy(h => h.getDatacenter).keys.to
   lazy val keyspaces: SortedSet[Keyspace] = keyspacesList.map(i => {
-    new Keyspace(i, dataCenter, Some(users))
+    new Keyspace(i, dataCenter, Some(users), Some(cluster.usernameValidator))
   }).to
 
   lazy val hosts = allHosts.map {
@@ -214,7 +215,7 @@ case class ClusterInfo(cluster_name : String,
   // TODO implement compare keyspaces - one cluster to another
 
 
-  private lazy val userNamingChecks = UserNameValidator.namingConventionChecks(users)
+  private lazy val userNamingChecks = cluster.usernameValidator.namingConventionChecks(users)
 
   lazy val myChecks: List[Check] = List(
     Check("Cluster agreement check", s"$cluster_name schema agreement issues!", schemaAgreement, Severity.ERROR)

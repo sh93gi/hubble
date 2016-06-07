@@ -8,9 +8,11 @@ import team.supernova.actor.collect.CassandraClusterGroup
 import team.supernova.cassandra.ClusterEnv
 import team.supernova.confluence.ConfluenceToken
 import team.supernova.graphite.{GraphiteConfig, GraphiteMetricConfig, GraphitePlotConfig}
+import team.supernova.users.UserNameValidator
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.util.matching.Regex
 
 object HubbleApp extends App {
 
@@ -31,9 +33,14 @@ object HubbleApp extends App {
     (for ((key,value) <- items.asScala) yield (key, value.unwrapped().toString)).toMap
   }
 
+  def mapConfigToUserNameValidator(config: Config) : UserNameValidator= {
+    val userNameSuffixes: Set[String] = config.getStringList("hubble.cassandra.username_suffixes").asScala.toSet
+    val userNameRegex: Regex = config.getString("hubble.cassandra.username_regex").r
+    UserNameValidator(userNameRegex, userNameSuffixes)
+  }
   def mapConfigToConfluenceSpace(config: Config) = config.getString("hubble.confluence.space")
 
-  def mapConfigToClusterEnv(graphiteConfig: GraphiteConfig, pr: Config): ClusterEnv = {
+  def mapConfigToClusterEnv(graphiteConfig: GraphiteConfig, userchecks: UserNameValidator, pr: Config): ClusterEnv = {
     new ClusterEnv(
       pr.getString("cluster_name"),
       pr.getString("graphana"),
@@ -46,7 +53,8 @@ object HubbleApp extends App {
       pr.getInt("port"),
       pr.getString("pword"),
       pr.getString("uname"),
-      pr.getInt("sequence")
+      pr.getInt("sequence"),
+      userchecks
     )
   }
 
@@ -74,11 +82,12 @@ object HubbleApp extends App {
 
   def mapConfigToCassandraClusterGroup(config: Config): List[CassandraClusterGroup] = {
     val graphite = mapConfigToGraphite(config)
+    val userChecks = mapConfigToUserNameValidator(config)
     config.getConfigList("hubble.cassandra.clusters")
       .map({ p: Config =>
         new CassandraClusterGroup(
           p.getString("name"),
-          p.getConfigList("envs").map(cf => mapConfigToClusterEnv(graphite, cf)).toList
+          p.getConfigList("envs").map(cf => mapConfigToClusterEnv(graphite, userChecks, cf)).toList
         )
       }).toList
   }

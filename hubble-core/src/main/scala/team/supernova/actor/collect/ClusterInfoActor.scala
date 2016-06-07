@@ -44,7 +44,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
       graphiteActor ! GraphiteMetricActor.StartWorkOnCluster(cluster, group)
       userActor ! ClusterUserActor.StartWorkOnCluster(cluster, group)
 
-    case ClusterMetadataActor.Finished(metadataResponse, cluster, group) =>{
+    case ClusterMetadataActor.Finished(metadataResponse, cluster, group) =>
       val clusterGroupKey = ClusterGroupKey(cluster.cluster_name, group)
       metadataResponse match{
         case Left(e)=>
@@ -57,7 +57,6 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
           opsCenterActor ! OpsCenterClusterInfoActor.StartWorkOnCluster(cluster, metadata, group)
       }
       collectResults(clusterGroupKey, cluster)
-    }
 
     case ClusterSlowQueryActor.Finished(slowQueries, cluster, group) =>
       val clusterGroupKey = ClusterGroupKey(cluster.cluster_name, group)
@@ -135,7 +134,8 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
             graphiteElement.get,
             usersElement.get.getOrElse(Set()),
             cluster,
-            key.group)
+            key.group
+            )
           requester ! ClusterInfoActor.WorkOnClusterFinished(cluster, Some(result))
         } catch {
           case e: Throwable =>
