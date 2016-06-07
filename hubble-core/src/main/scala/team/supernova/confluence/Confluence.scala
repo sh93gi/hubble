@@ -49,6 +49,29 @@ object Confluence {
     new java.math.BigInteger(1, m.digest()).toString(16)
   }
 
+  def confluenceCreateTokenLessPage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, notify: Boolean=true) : RemotePage = {
+    try {
+      log.info(s"Updating: $pageName")
+      val existingPage: RemotePage = pageObject.read(project, pageName)
+      existingPage.setContent(content)
+      pageObject.update(existingPage, notify)
+      log.info(s"$pageName page updated, notify = $notify")
+      pageObject.read(project, pageName)
+    }
+    catch {
+      case e: Exception =>
+        log.info(s"Failed to update $pageName because of ${e.getMessage}. Will create it.")
+        val newPage: RemotePage = new RemotePage
+        newPage.setContent(content)
+        newPage.setTitle(pageName)
+        newPage.setParentId(parentPage.getId)
+        newPage.setSpace(parentPage.getSpace)
+        pageObject.store(newPage)
+        log.info(s"$pageName created!")
+        pageObject.read(project, pageName)
+    }
+  }
+
   //update a page if the token is unknown or create a confluence page if the page does not exist
   def confluenceCreatePage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, tokenPage: RemotePage, notify: Boolean=true): String = {
 
@@ -70,6 +93,7 @@ object Confluence {
       }
       catch {
         case e: Exception =>
+          log.info(s"Failed to update $pageName because of ${e.getMessage}. Will create it.")
           val newPage: RemotePage = new RemotePage
           newPage.setContent(content)
           newPage.setTitle(pageName)

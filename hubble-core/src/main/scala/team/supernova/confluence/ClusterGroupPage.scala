@@ -5,8 +5,6 @@ import java.util.Calendar
 import team.supernova.GroupClusters
 import team.supernova.validation.Severity
 
-import scala.collection.SortedSet
-
 object ClusterGroupPage {
   //TODO - make graphite checker!!!  Seems to be rather messy
   //this is using graphana!
@@ -14,7 +12,7 @@ object ClusterGroupPage {
 
   def generateClusterGroupPage(groupClusters: GroupClusters, project: String): String=  {
 
-    val listKeyspace: SortedSet[String] = groupClusters.clusterInfoList.flatMap(_.keyspaces).map(_.keyspace_name)
+    val listKeyspace: Seq[String] = groupClusters.clusterInfoList.flatMap(_.keyspaces).map(_.keyspace_name).sorted
 
     //this must not be sorted as it is already sorted - just need the list of names!
     val listClusterName: List[String] = groupClusters.clusterInfoList.foldLeft(List[String]()){(a,b) => a ++ List(b.cluster_name)}
@@ -50,8 +48,8 @@ object ClusterGroupPage {
       <h1>Cluster Yaml comparison</h1>
       {
         val keyVsYaml = groupClusters.clusterInfoList.toList
-          .map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.opsCenterClusterInfo
-          .map(_.nodes.headOption.map(_.cassandra)).flatten.getOrElse(None)))
+          .map(clusterInfo=>(clusterInfo.cluster_name,
+            clusterInfo.opsCenterClusterInfo.flatMap(_.nodes.headOption.flatMap(_.cassandra))))
         CassandraYamlSection.presentYamlCompare(keyVsYaml)
       }
       <h1>Cluster Keyspace Summary</h1>
