@@ -7,7 +7,7 @@
     <parent>
 		<groupId>team.supernova.hubble</groupId>
 		<artifactId>hubble</artifactId>
-		<version>0.6</version>
+		<version>0.7-SNAPSHOT</version>
     </parent>
 
 	<artifactId>hubble-reporting</artifactId>
