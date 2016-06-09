@@ -16,10 +16,10 @@ object ClusterSummaryPage {
     //need <body> tag otherwise ArrayBuilder is shown on confluence
     <body>{Confluence.CONFLUENCE_HEADER("This section summarises all the cluster information.")}<hr/>
       <h1>Cluster: {clusterInfo.cluster_name}</h1>
-      <p>{ Confluence.confluenceCodeBlock("Errors", clusterErrors ,"none")}
+      <p><a href={ConfluenceNaming.createMetricsLink(project, clusterInfo)}>Detailed cluster metrics</a>
+      { Confluence.confluenceCodeBlock("Errors", clusterErrors ,"none")}
         { Confluence.confluenceCodeBlock("Warnings", clusterWarnings ,"none")}
       </p>
-      <a href={ConfluenceNaming.createMetricsLink(project, clusterInfo)}>Detailed cluster metrics</a>
       <h1>Host Information</h1>
       <p>
         <table>

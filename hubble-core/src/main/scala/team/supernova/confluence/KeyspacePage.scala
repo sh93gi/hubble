@@ -15,9 +15,9 @@ object KeyspacePage {
     //need <body> tag otherwise ArrayBuilder is shown on confluence
     <body>{Confluence.CONFLUENCE_HEADER("This section summarises all the keyspace information.")}<hr/>
       <h1>Keyspace: {keyspace.keyspace_name}</h1>
-      <p>{ Confluence.confluenceCodeBlock("Errors", keyspaceErrors ,"none")}
+      <p><a href={ConfluenceNaming.createMetricsLink(project, clusterInfo, keyspace)}>Detailed keyspace metrics</a>
+      { Confluence.confluenceCodeBlock("Errors", keyspaceErrors ,"none")}
         { Confluence.confluenceCodeBlock("Warnings", keyspaceWarnings ,"none")}
-        <a href={ConfluenceNaming.createMetricsLink(project, clusterInfo, keyspace)}>Detailed cluster metrics</a>
       </p>
       <p>{ Confluence.confluenceCodeBlock("Schema",keyspace.schemaScript,"none")}</p>
       <h1>Tables</h1>

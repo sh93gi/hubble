@@ -64,7 +64,8 @@ object SlowQuerySections {
   }
 
   def slowQueryTableParagraph(queries: List[SlowQuery]) : NodeSeq = {
-    <p>Top {queries.size} slow queries
+    <h1>Top {queries.size} slow queries</h1>
+    <p>
       {slowQueryTable(queries: List[SlowQuery])}
     </p>
   }
