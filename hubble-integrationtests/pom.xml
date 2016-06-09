@@ -7,12 +7,12 @@
     <parent>
 		<groupId>team.supernova.hubble</groupId>
 		<artifactId>hubble</artifactId>
-		<version>0.6-SNAPSHOT</version>
+		<version>0.6</version>
     </parent>
 
 	<artifactId>hubble-integrationtests</artifactId>
 	<name>Hubble integration test base classes</name>
-    <description>>Base classes to create tests for hubble on a specific Cassandra database</description>
+    <description>&gt;Base classes to create tests for hubble on a specific Cassandra database</description>
 	<packaging>jar</packaging>
 
 	<dependencies>
