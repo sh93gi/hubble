@@ -16,7 +16,7 @@
     <scm>
         <connection>scm:git:git@github.com:Supernova-Team/hubble.git</connection>
         <developerConnection>scm:git:git@github.com:Supernova-Team/hubble.git</developerConnection>
-      <tag>hubble-0.1</tag>
+      <tag>hubble-0.7-SNAPSHOT</tag>
   </scm>
 
     <!--Main ain pom file &ndash;&gt;-->
