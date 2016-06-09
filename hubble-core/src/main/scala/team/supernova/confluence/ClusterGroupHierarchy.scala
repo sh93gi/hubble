@@ -1,111 +1,145 @@
 package team.supernova.confluence
 
+import org.slf4j.LoggerFactory
 import team.supernova._
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
-import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
+import team.supernova.confluence.soap.rpc.soap.beans.{RemotePage, RemotePageSummary}
 
-/**
- * Created by Gary Stewart on 4-8-2015.
- *
- */
+import scala.collection.mutable.ArrayBuffer
+
+class ClusterGroupHierarchy(project: String, page: Page, tokenPage: RemotePage){
+  val log = LoggerFactory.getLogger(classOf[ClusterGroupHierarchy])
+  var tokenContent: String = ""
+  var expectedTitles = ArrayBuffer[String](tokenPage.getTitle)
+
+  def createWithToken(title: String, content: String, parent: RemotePage): RemotePage ={
+    val clusterPageHash = Confluence.confluenceCreatePage(project, title, content, page, parent, tokenPage)
+    tokenContent = tokenContent + "<br/>" + clusterPageHash
+    expectedTitles += title
+    page.read(project, title)
+  }
+
+  def createTokenless(title: String, content: String, parent: RemotePage):Unit = {
+    Confluence.confluenceCreateTokenLessPage(project, title, content, page, parent, notify = false)
+    expectedTitles += title
+  }
+
+  def updateToken(){
+    tokenPage.setContent(tokenContent)
+    page.update(tokenPage, false)
+    log.info(s"TOKEN page updated!")
+  }
+
+  def contains(title: String): Boolean ={
+    expectedTitles.contains(title)
+  }
+
+  def getDepth(child: RemotePageSummary, parent: RemotePageSummary): Option[Int] = {
+    var currentChild = child
+    if (child.getId == parent.getId)
+      return Some(0)
+    var depth=1
+    while(currentChild.getParentId!=parent.getId) {
+      currentChild = page.read(currentChild.getParentId)
+      depth+=1
+      if (depth == 10)
+        return None
+    }
+    Some(depth)
+  }
+}
+
 object ClusterGroupHierarchy {
+  val log = LoggerFactory.getLogger(ClusterGroupHierarchy.getClass)
 
   //TODO create Cluster page if not exits and group page if does not exist!
   //TODO CHeck if gets updated the first ever time
-    def generateClusterGroupHierarchyPages(allClusters    : GroupClusters,
-                                           project        : String,
-                                           mainPageName   : String,
-                                           token          : Token,
-                                           deletePages    : Boolean): Unit = {
+  def generateClusterGroupHierarchyPages(allClusters: GroupClusters,
+                                         project: String,
+                                         mainPageName: String,
+                                         token: Token,
+                                         deletePages: Boolean): Unit = {
 
     //login into confluence
     val page: Page = new Page
 
     //Find the main Clusters page
-    val parentPage: RemotePage = page.read(project, mainPageName)
+    val clusterGroupPage: RemotePage = page.read(project, mainPageName)
     val tokenPageName = mainPageName + "-TOKEN"
 
     //read token page
-    var tokenPage: RemotePage = null
-    try {
-      println (s"Reading $tokenPageName page")
-      tokenPage = page.read(project, tokenPageName)
-      println (s"$tokenPageName page found")
-    }
-    catch {
-      case e: Exception =>
-        val newPage: RemotePage = new RemotePage
-        newPage.setTitle(tokenPageName)
-        newPage.setParentId(parentPage.getId)
-        newPage.setSpace(parentPage.getSpace)
-        tokenPage = page.store(newPage)
-        println (s"$tokenPageName page created!")
-    }
+    val tokenPage: RemotePage = Confluence.confluenceCreateTokenLessPage(project, tokenPageName, "", page, clusterGroupPage, notify = false)
 
+    val hierarchy = new ClusterGroupHierarchy(project, page, tokenPage)
     //Always update the Cluster page
-    parentPage.setContent( s"<body>${ClusterGroupPage.generateClusterGroupPage(allClusters, project)}</body>")
-    page.store(parentPage)
+    clusterGroupPage.setContent(s"<body>${ClusterGroupPage.generateClusterGroupPage(allClusters, project)}</body>")
+    page.store(clusterGroupPage)
 
-    var tokenContent: String = ""
 
     //Per ClusterInfo - create page
-    for(clusterInfo <- allClusters.clusterInfoList)
+    for (clusterInfo <- allClusters.clusterInfoList)
       yield {
-        val clusterPageName = clusterInfo.cluster_name.toUpperCase
         //create the specific summary cluster page
-        tokenContent = tokenContent +"<br/>"+ Confluence.confluenceCreatePage (project,clusterPageName, ClusterSummaryPage.generateClusterSummaryPage(project, clusterInfo), page, parentPage, tokenPage )
-        val clusterParentPage: RemotePage = page.read(project,clusterPageName)
+        val clusterPageName = ConfluenceNaming.createName(clusterInfo)
+        val clusterContent = ClusterSummaryPage.generateClusterSummaryPage(project, clusterInfo)
+        val clusterParentPage = hierarchy.createWithToken(clusterPageName, clusterContent, clusterGroupPage)
 
-        //Per keyspace create pages
-        for(keyspace <- clusterInfo.keyspaces)
+
+        // Create different page for metrics of cluster, without notifications.
+        val clusterMetricsContent = ClusterMetricsPage.generateClusterMetricsPage(project, clusterInfo)
+        val clusterMetricsPageName = ConfluenceNaming.createMetricsName(clusterInfo)
+        hierarchy.createTokenless(clusterMetricsPageName, clusterMetricsContent, clusterParentPage)
+
+        // Per keyspace create pages
+        for (keyspace <- clusterInfo.keyspaces)
           yield {
-            val content: String = KeyspacePage.generateKeyspacePage(keyspace, clusterInfo)
-            //SEE DELETE below if you change this!!!!!!
-            val keyPageName =  clusterInfo.cluster_name.toUpperCase + " - " + keyspace.keyspace_name.toUpperCase
-            tokenContent = tokenContent +"<br/>"+ Confluence.confluenceCreatePage (project,keyPageName, content, page, clusterParentPage, tokenPage )
+            val keyspaceContent = KeyspacePage.generateKeyspacePage(project, keyspace, clusterInfo)
+            val keyPageName = ConfluenceNaming.createName(clusterInfo, keyspace)
+            val keyspacePage = hierarchy.createWithToken(keyPageName, keyspaceContent, clusterParentPage)
+
+            // Create different page for metrics of keyspace, without notification
+            val keyspaceMetricsContent = KeyspaceMetricsPage.generateKeyspaceMetricsPage(keyspace, clusterInfo)
+            val keyspaceMetricsPageName = ConfluenceNaming.createMetricsName(clusterInfo, keyspace)
+            hierarchy.createTokenless(keyspaceMetricsPageName, keyspaceMetricsContent, keyspacePage)
           }
       }
-
 
     //update the TOKEN page
-    tokenPage.setContent(tokenContent)
-    page.update(tokenPage, false)
-    println (s"TOKEN page updated!")
+    hierarchy.updateToken()
 
 
-   //clean up pages no longer needed - ie keyspace deleted
-    //TODO add this method to confluence package??
-     val clusterPages =  token.getService.getChildren(token.getToken, parentPage.getId)
-    //clusterPages.foreach(p => println (p.getTitle))
-    def substringAfter(s:String,k:String) = { s.indexOf(k) match { case -1 => ""; case i => s.substring(i+k.length)  } }
-    //start bottom up
-    for(cPage <- clusterPages)
-      yield {
-        val keyspacePages =  token.getService.getChildren(token.getToken, cPage.getId)
-        for(kPage <- keyspacePages)
-          yield {
-            //SEE CREATE if you change this!!!!!!
-            //Delete keyspace page if not exists
-            if (allClusters.clusterInfoList.filter(cList => cList.cluster_name.toUpperCase.equals(cPage.getTitle)).
-              flatMap(cl => cl.keyspaces).count(k => k.keyspace_name.toUpperCase.equals(substringAfter(kPage.getTitle," - "))) == 0 )
-              {
-                println (s"Found page to be deleted: ${kPage.getTitle}, DeletePage is $deletePages")
-                if (deletePages) {
-                  println (s"DELETING page: ${kPage.getTitle}")
-                  page.remove(kPage.getId)
-                  println (s"DELETED page: ${kPage.getTitle}")
-                }
+    //clean up pages no longer needed - ie keyspace deleted
+    val keyspace_depth = 2
+    for (kPage <- token.getService.getDescendents(token.getToken, clusterGroupPage.getId)
+          if !hierarchy.contains(kPage.getTitle)) {
+      val depth = hierarchy.getDepth(kPage, clusterGroupPage)
+      log.info(s"Found page at depth $depth to be deleted: ${kPage.getTitle}, DeletePage is $deletePages")
+      depth match{
+        case Some(x) if x >= keyspace_depth =>  //Does not delete clusters
+          if (deletePages || kPage.getTitle.endsWith("metrics")){
+            log.info(s"DELETING page: ${kPage.getTitle}")
+            page.remove(kPage.getId)
+            log.info(s"DELETED page: ${kPage.getTitle}")
+          } else {
+            val deletionSuffix = "[deleted]"
+            if (!deletePages && !kPage.getTitle.endsWith(deletionSuffix)){
+              val kPageFull = page.read(kPage.getId)
+              val parentPage = page.read(kPage.getParentId)
+              // If the keyspace of the page is of a cluster we've actually verified this run
+              if (allClusters.clusterInfoList.count(ConfluenceNaming.hasNameOf(_, parentPage)) > 0) {
+                // Then rename it
+                kPageFull.setTitle(kPage.getTitle + deletionSuffix)
+                log.info(s"RENAMING page: ${kPage.getTitle} to ${kPageFull.getTitle}")
+                page.store(kPageFull)
               }
+            }
           }
-
-//TODO - REMOVED for now - need to rethink if this is handy
-//        //Delete cluster page if not exists
-//        if (!listClusterName.contains(cPage.getTitle))
-//        {
-//          println (s"DELETING page: ${cPage.getTitle}")
-//          page.remove(cPage.getId)
-//        }
+        case Some(x)=>
+          log.info(s"Not deleting page: ${kPage.getTitle} because of wrong depth compared to space")
+        case None=>
+          log.info(s"Not deleting page: ${kPage.getTitle} because of unknown depth compared to space")
       }
+    }
   }
 
 

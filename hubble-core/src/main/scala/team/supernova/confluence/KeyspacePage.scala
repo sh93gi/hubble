@@ -6,7 +6,7 @@ import team.supernova.{ClusterInfo, Keyspace, Table}
 object KeyspacePage {
 
 
-  def generateKeyspacePage(keyspace: Keyspace, clusterInfo: ClusterInfo): String= {
+  def generateKeyspacePage(project: String, keyspace: Keyspace, clusterInfo: ClusterInfo): String= {
 
     val keyspaceWarnings = keyspace.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.WARNING)).map(_.details).sorted.mkString("\n")
     val keyspaceErrors = keyspace.checks.filterNot(_.hasPassed).filter(c => c.severity.equals(Severity.ERROR)).map(_.details).sorted.mkString("\n")
@@ -15,9 +15,9 @@ object KeyspacePage {
     //need <body> tag otherwise ArrayBuilder is shown on confluence
     <body>{Confluence.CONFLUENCE_HEADER("This section summarises all the keyspace information.")}<hr/>
       <h1>Keyspace: {keyspace.keyspace_name}</h1>
-      <p>{ Confluence.confluenceCodeBlock("Errors", keyspaceErrors ,"none")}
+      <p><a href={ConfluenceNaming.createMetricsLink(project, clusterInfo, keyspace)}>Detailed keyspace metrics</a>
+      { Confluence.confluenceCodeBlock("Errors", keyspaceErrors ,"none")}
         { Confluence.confluenceCodeBlock("Warnings", keyspaceWarnings ,"none")}
-        { clusterInfo.slowQueries.keyspaceSlow.get(keyspace.keyspace_name).map(topSlowest => SlowQuerySections.slowQueryTable(topSlowest.get(10))).getOrElse("")}
       </p>
       <p>{ Confluence.confluenceCodeBlock("Schema",keyspace.schemaScript,"none")}</p>
       <h1>Tables</h1>
@@ -62,7 +62,6 @@ object KeyspacePage {
           { Confluence.confluenceCodeBlock("References",possibleLinks,"none")}
           { Confluence.confluenceCodeBlock("Comments",table.comments,"none")}
           { Confluence.confluenceCodeBlock("Warnings",tableWarnings,"none")}
-          { clusterInfo.slowQueries.tableSlow.get(s"${keyspace.keyspace_name}.${table.table_name}").map(topSlowest => SlowQuerySections.slowQueryTable(topSlowest.get(10))).getOrElse("")}
         </td>
       </tr>
 

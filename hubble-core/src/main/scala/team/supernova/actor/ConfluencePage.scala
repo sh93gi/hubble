@@ -5,8 +5,6 @@ import team.supernova.confluence.ClusterGroupHierarchy
 import team.supernova.confluence.soap.rpc.soap.actions.Token
 import team.supernova.{ClusterInfo, GroupClusters}
 
-import scala.collection.SortedSet
-
 object ConfluencePage {
   case object Done
   case class  GenerateAll(clusterInfoSet: Set[ClusterInfo])
@@ -16,18 +14,19 @@ object ConfluencePage {
 
 class ConfluencePage(space: String, token: Token) extends Actor with ActorLogging {
   override def receive: Receive = {
-    case ConfluencePage.GenerateAll(clusterInfoSet) => {
-      log.info("Start generating confluence pages")
-      // TODO create separate actor instead of looping over groups
-      val clusterMap = clusterInfoSet.groupBy(f => f.group)
-      clusterMap.foreach(
-        map =>
-        {
-          val allClusters = GroupClusters(SortedSet[ClusterInfo]() ++ map._2)
-          ClusterGroupHierarchy.generateClusterGroupHierarchyPages(allClusters, space, map._1, token, false)
+    case ConfluencePage.GenerateAll(clusterInfoSet) =>
+      try {
+        log.info("Start generating confluence pages")
+        // TODO create separate actor instead of looping over groups
+        val clusterMap = clusterInfoSet.groupBy(f => f.group)
+        clusterMap.foreach { case (groupName, clusters) =>
+          val allClusters = GroupClusters(clusters.toSeq.sorted)
+          ClusterGroupHierarchy.generateClusterGroupHierarchyPages(allClusters, space, groupName, token, deletePages = false)
         }
-      )
-      sender ! ConfluencePage.Done
-    }
+      }catch{
+        case e:Exception => log.error(e, "Failed to create confluence pages")
+      }finally{
+        sender ! ConfluencePage.Done
+      }
   }
 }

@@ -1,5 +1,6 @@
 package team.supernova.confluence
 
+import org.slf4j.LoggerFactory
 import team.supernova.confluence.soap.rpc.soap.actions.Page
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
 
@@ -11,6 +12,7 @@ import scala.xml.NodeSeq
  */
 
 object Confluence {
+  val log = LoggerFactory.getLogger(Confluence.getClass)
 
   def CONFLUENCE_HEADER (intro: String) = <ac:structured-macro ac:name="section">
     <ac:rich-text-body>
@@ -47,34 +49,58 @@ object Confluence {
     new java.math.BigInteger(1, m.digest()).toString(16)
   }
 
+  def confluenceCreateTokenLessPage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, notify: Boolean=true) : RemotePage = {
+    try {
+      log.info(s"Updating: $pageName")
+      val existingPage: RemotePage = pageObject.read(project, pageName)
+      existingPage.setContent(content)
+      pageObject.update(existingPage, notify)
+      log.info(s"$pageName page updated, notify = $notify")
+      pageObject.read(project, pageName)
+    }
+    catch {
+      case e: Exception =>
+        log.info(s"Failed to update $pageName because of ${e.getMessage}. Will create it.")
+        val newPage: RemotePage = new RemotePage
+        newPage.setContent(content)
+        newPage.setTitle(pageName)
+        newPage.setParentId(parentPage.getId)
+        newPage.setSpace(parentPage.getSpace)
+        pageObject.store(newPage)
+        log.info(s"$pageName created!")
+        pageObject.read(project, pageName)
+    }
+  }
+
   //update a page if the token is unknown or create a confluence page if the page does not exist
-  def confluenceCreatePage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, tokenPage: RemotePage): String = {
+  def confluenceCreatePage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, tokenPage: RemotePage, notify: Boolean=true): String = {
 
     val contentMD5 = pageName + "_MD5:" + md5hash(content)
 
     //if the contentMD5 exists in TOKEN no need to read and update confluence!
 
       try {
-        println(s"Checking ${tokenPage.getTitle} for page: $pageName ")
+        log.info(s"Checking ${tokenPage.getTitle} for page: $pageName ")
         if (!tokenPage.getContent.contains(contentMD5)) {
-          println(s"Updating: $pageName")
+          log.info(s"Updating: $pageName")
           val existingPage: RemotePage = pageObject.read(project, pageName)
           existingPage.setContent(content)
-          pageObject.store(existingPage)
-          println(s"$pageName page updated.")
+          pageObject.update(existingPage, notify)
+          log.info(s"$pageName page updated, notify = $notify")
         } else {
-          println(s"$pageName page not updated!")
+          log.info(s"$pageName page not updated!")
         }
       }
       catch {
         case e: Exception =>
+          log.info(s"Failed to update $pageName because of ${e.getMessage}. Will create it.")
           val newPage: RemotePage = new RemotePage
           newPage.setContent(content)
           newPage.setTitle(pageName)
           newPage.setParentId(parentPage.getId)
           newPage.setSpace(parentPage.getSpace)
           pageObject.store(newPage)
-          println(s"$pageName created!")
+          log.info(s"$pageName created!")
       }
 
 
