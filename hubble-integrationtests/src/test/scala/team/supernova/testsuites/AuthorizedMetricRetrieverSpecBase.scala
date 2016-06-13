@@ -26,14 +26,17 @@ abstract class AuthorizedMetricRetrieverSpecBase
   describe("graphite metric retrieval"){
 
     it  ("should retrieve measurements") {
-      val metric = clusterInstance.graphiteConfig.graphite_metrics.head
+      val metric = clusterInstance.graphiteConfig.graphite_cluster_metrics.head
       val measure = new AuthorizedGraphiteReader(metric.url_template, graphiteUserName, graphitePassword)
         .retrieve(clusterInstance.graphite)
       measure should not be None
     }
 
     it  ("should retrieve all metric values") {
-      val measures = AuthorizedGraphiteReader.retrieveAll(clusterInstance)
+      val measures = AuthorizedGraphiteReader.retrieveAll(
+        clusterInstance.graphiteConfig.graphite_login,
+        clusterInstance.graphiteConfig.graphite_cluster_metrics,
+        clusterInstance.graphite)
       measures.size should be > 1
       measures.filter(_.value.isEmpty) should have size 0
     }

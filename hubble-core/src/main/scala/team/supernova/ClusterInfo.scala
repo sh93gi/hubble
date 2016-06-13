@@ -192,6 +192,7 @@ case class ClusterInfo(cluster_name : String,
                        slowQueries: ClusterSlowQueries,
                        opsCenterClusterInfo: Option[OpsCenterClusterInfo],
                        metrics: List[MetricResult],
+                       keyspaceMetrics: Map[String, List[MetricResult]],
                        users: Set[String],
                        cluster: ClusterEnv,
                        group: String)
@@ -219,7 +220,6 @@ case class ClusterInfo(cluster_name : String,
 
   lazy val myChecks: List[Check] = List(
     Check("Cluster agreement check", s"$cluster_name schema agreement issues!", schemaAgreement, Severity.ERROR)
-    //TODO add user naming conventions check here.
   ) ++ userNamingChecks
 
   lazy val children = keyspaces.toList

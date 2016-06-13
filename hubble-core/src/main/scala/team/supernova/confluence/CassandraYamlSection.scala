@@ -40,7 +40,7 @@ class CassandraYamlSection(yamls : List[(String, Option[CassandraYaml])]){
         {nameYaml._2.all.get(key).map(CassandraYamlSection.yamlValueToString).getOrElse("").split("\r\n").map(s => Text(s))
         .reduce(Confluence.joinWithBr)}
       </td>
-    ).toSeq}
+    )}
     </tr>
   }
 
