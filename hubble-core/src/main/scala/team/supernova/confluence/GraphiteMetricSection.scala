@@ -27,6 +27,7 @@ class GraphiteMetricTable(metricNames: List[String]){
 
   /**
     * Create th node sequence (not including tr), to easily add metrics to an existing table
+    *
     * @return nodeseq to insert within a tr to add metric header columns to a table
     */
   def headerCells() : NodeSeq={
@@ -35,6 +36,7 @@ class GraphiteMetricTable(metricNames: List[String]){
 
   /**
     * Create td node sequence (not including tr), to easily add metric values to an existing table
+    *
     * @return nodeseq to insert within a tr to add metric value columns to a table
     */
   def contentCells(metrics: List[MetricResult]) : NodeSeq={
@@ -51,35 +53,51 @@ class GraphiteMetricTable(metricNames: List[String]){
 }
 
 object GraphiteMetricSection {
-  def singleMetricTable(metrics: List[MetricResult]): NodeSeq={
+  def singleMetricTable(metrics: List[MetricResult], header: NodeSeq): NodeSeq={
     if (metrics.isEmpty)
       return NodeSeq.Empty
-    <h1>Cluster Metrics</h1>
-    <table>
-      <tbody><tr><th>Metric Name</th><th>Metric Value</th></tr>
-        {metrics.sortBy(_.name).map(MetricXml).map(result=>
-        {
-          <tr><td>{result.nameNodes()}</td><td>{ result.resultNodes()}</td></tr>
-        }).toSeq }
-      </tbody>
-    </table>
+    header ++
+    <p>
+      <table>
+        <tbody><tr><th>Metric Name</th><th>Metric Value</th></tr>
+          {metrics.sortBy(_.name).map(MetricXml).map(result=>
+          {
+            <tr><td>{result.nameNodes()}</td><td>{ result.resultNodes()}</td></tr>
+          }) }
+        </tbody>
+      </table>
+    </p>
   }
 
-  def combinedMetricTable(multimetrics  : Map[String, List[MetricResult]]) : NodeSeq = {
+  def combinedMetricTable(multimetrics  : Map[String, List[MetricResult]], header: NodeSeq, keyToUrl : Option[(String)=>String]= None ) : NodeSeq = {
     //Are there any metrics at all?
     if (!multimetrics.values.flatten.map(_.value).exists(_.isDefined))
       return NodeSeq.Empty
     // All metrics, to distinguish between N/A (requested, but not found) and not requested
     val metricTable = new GraphiteMetricTable(multimetrics.values.flatten.map(_.name).toList)
-    <h1>Cluster Metrics Summary</h1>
+    header ++
     <p>
       <table>
-        <tbody><tr><th>Cluster</th>{metricTable.headerCells()}</tr>
-          {multimetrics.toList.sortBy(_._1).map(kv=>{
-            val clusterName = kv._1
-            val clusterMetrics = kv._2
-            <tr><td>{scala.xml.Utility.escape(clusterName)}</td>{metricTable.contentCells(clusterMetrics)}</tr>
-          }).toSeq}
+        <tbody><tr><th>Cluster</th>{metricTable.headerCells()}</tr>{multimetrics.toList.sortBy(_._1).map(kv => {
+          val clusterName = kv._1
+          val clusterMetrics = kv._2
+          val link = keyToUrl.map(_ (clusterName))
+          val link_pre = if (link.isDefined) {
+            scala.xml.Unparsed(s"""<a href="${scala.xml.Utility.escape(link.get)}">""")
+          } else {
+            NodeSeq.Empty
+          }
+          val link_post = if (link.isDefined) {
+            scala.xml.Unparsed("</a>")
+          } else {
+            NodeSeq.Empty
+          }
+          <tr>
+            <td>
+              {link_pre ++ scala.xml.Utility.escape(clusterName) ++ link_post}
+            </td>{metricTable.contentCells(clusterMetrics)}
+          </tr>
+        })}
         </tbody>
       </table>
     </p>
