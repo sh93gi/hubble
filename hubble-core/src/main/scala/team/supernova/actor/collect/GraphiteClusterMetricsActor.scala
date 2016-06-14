@@ -5,8 +5,8 @@ import team.supernova.cassandra.ClusterEnv
 import team.supernova.graphite.{AuthorizedGraphiteReader, MetricResult}
 
 object GraphiteClusterMetricsActor {
-  case class StartWorkOnCluster(cluster: ClusterEnv, group: String)
-  case class Finished(graphiteResults: List[MetricResult], cluster: ClusterEnv, group: String)
+  case class StartWorkOnCluster(cluster: ClusterEnv, taskKey: ClusterActorTaskKey)
+  case class Finished(graphiteResults: List[MetricResult], taskKey: ClusterActorTaskKey)
   def props(requester: ActorRef): Props = Props(new GraphiteClusterMetricsActor(requester))
 }
 
@@ -27,9 +27,9 @@ class GraphiteClusterMetricsActor(requester: ActorRef)  extends Actor with Actor
   }
 
   override def receive: Receive = {
-    case GraphiteClusterMetricsActor.StartWorkOnCluster(cluster, group) =>
+    case GraphiteClusterMetricsActor.StartWorkOnCluster(cluster, taskKey) =>
       log.info(s"Get graphic metrics for cluster ${cluster.cluster_name}")
-      sender ! GraphiteClusterMetricsActor.Finished(process(cluster), cluster, group)
+      sender ! GraphiteClusterMetricsActor.Finished(process(cluster), taskKey)
   }
 
 }

@@ -5,8 +5,8 @@ import team.supernova.cassandra.ClusterEnv
 import team.supernova.graphite.{AuthorizedGraphiteReader, MetricResult}
 
 object GraphiteKeyspaceMetricsActor {
-  case class StartWorkOnCluster(cluster: ClusterEnv, keyspaces: List[String], key: ClusterGroupKey)
-  case class Finished(graphiteResults: Map[String, List[MetricResult]], key: ClusterGroupKey)
+  case class StartWorkOnCluster(cluster: ClusterEnv, keyspaces: List[String], key: ClusterActorTaskKey)
+  case class Finished(graphiteResults: Map[String, List[MetricResult]], key: ClusterActorTaskKey)
   def props(requester: ActorRef): Props = Props(new GraphiteKeyspaceMetricsActor(requester))
 }
 

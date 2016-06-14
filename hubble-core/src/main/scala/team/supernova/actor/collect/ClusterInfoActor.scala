@@ -9,6 +9,7 @@ import team.supernova.opscenter.OpsCenterClusterInfo
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.util.{Failure, Success}
 
 object ClusterInfoActor {
   case class StartWorkOnCluster(cluster: ClusterEnv, group: String)
@@ -16,7 +17,13 @@ object ClusterInfoActor {
   def props(requester: ActorRef): Props = Props(new ClusterInfoActor(requester))
 }
 
-case class ClusterGroupKey(clusterName: String, group: String) {
+/**
+  * Holds the information needed by ClusterInfoActor to know to which task a message is related
+  *
+  * @param clusterName the name of the cluster for which tasks are dnoe
+  * @param group the group oft the cluster for which tasks are done
+  */
+case class ClusterActorTaskKey(clusterName: String, group: String) {
   override def toString = s"$group's $clusterName"
 }
 
@@ -30,79 +37,79 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
   val graphiteKeyspaceActor = actorOf(GraphiteKeyspaceMetricsActor.props(self))
   val userActor = actorOf(ClusterUserActor.props(self))
 
-  var taskData = mutable.Map[ClusterGroupKey, ClusterEnv]()
-  var metaResult = mutable.Map[ClusterGroupKey, Option[Metadata]]()
-  var slowQueryResult = mutable.Map[ClusterGroupKey, ClusterSlowQueries]()
-  var opsCenterResults = mutable.Map[ClusterGroupKey, Option[OpsCenterClusterInfo]]()
-  var graphiteClusterResults = mutable.Map[ClusterGroupKey, List[MetricResult]]()
-  var graphiteKeyspaceResults = mutable.Map[ClusterGroupKey, Map[String, List[MetricResult]]]()
-  var usersResults = mutable.Map[ClusterGroupKey, Option[Set[String]]]()
+  var taskData = mutable.Map[ClusterActorTaskKey, ClusterEnv]()
+  var metaResult = mutable.Map[ClusterActorTaskKey, Option[Metadata]]()
+  var slowQueryResult = mutable.Map[ClusterActorTaskKey, ClusterSlowQueries]()
+  var opsCenterResults = mutable.Map[ClusterActorTaskKey, Option[OpsCenterClusterInfo]]()
+  var graphiteClusterResults = mutable.Map[ClusterActorTaskKey, List[MetricResult]]()
+  var graphiteKeyspaceResults = mutable.Map[ClusterActorTaskKey, Map[String, List[MetricResult]]]()
+  var usersResults = mutable.Map[ClusterActorTaskKey, Option[Set[String]]]()
 
   override def receive: Receive = {
     case ClusterInfoActor.StartWorkOnCluster(cluster, group) =>
       log.info(s"Starting collecting cluster related info of $group 's ${cluster.cluster_name}")
-      val taskKey = ClusterGroupKey(cluster.cluster_name, group) -> cluster
-      taskData += taskKey
-      metaActor ! ClusterMetadataActor.StartWorkOnCluster(cluster, group)
-      slowQueryActor ! ClusterSlowQueryActor.StartWorkOnCluster(cluster, group)
-      graphiteClusterActor ! GraphiteClusterMetricsActor.StartWorkOnCluster(cluster, group)
-      userActor ! ClusterUserActor.StartWorkOnCluster(cluster, group)
+      val taskKey = ClusterActorTaskKey(cluster.cluster_name, group)
+      taskData += taskKey -> cluster
+      metaActor ! ClusterMetadataActor.StartWorkOnCluster(cluster, taskKey)
+      slowQueryActor ! ClusterSlowQueryActor.StartWorkOnCluster(cluster, taskKey)
+      graphiteClusterActor ! GraphiteClusterMetricsActor.StartWorkOnCluster(cluster, taskKey)
+      userActor ! ClusterUserActor.StartWorkOnCluster(cluster, taskKey)
 
-    case ClusterMetadataActor.Finished(metadataResponse, cluster, group) =>
-      val requestKey = ClusterGroupKey(cluster.cluster_name, group)
+    case ClusterMetadataActor.Finished(metadataResponse, taskKey) =>
       metadataResponse match{
-        case Left(e)=>
-          log.error(s"Received failed cluster metadata of $group's ${cluster.cluster_name}. ${e.getMessage}")
-          metaResult += requestKey -> None
-          opsCenterResults += requestKey -> None
-          graphiteKeyspaceResults += requestKey -> Map()
-        case Right(metadata)=>
-          metaResult += requestKey -> Some(metadata)
-          log.info(s"Received cluster metadata of $requestKey")
-          opsCenterActor ! OpsCenterClusterInfoActor.StartWorkOnCluster(cluster, metadata, group)
-          graphiteKeyspaceActor ! GraphiteKeyspaceMetricsActor.StartWorkOnCluster(cluster,
-            metadata.getKeyspaces.asScala.toList.map(_.getName),
-            requestKey)
+        case Failure(e)=>
+          log.error(s"Received failed cluster metadata for $taskKey. ${e.getMessage}")
+          metaResult += taskKey -> None
+          opsCenterResults += taskKey -> None
+          graphiteKeyspaceResults += taskKey -> Map()
+        case Success(metadata)=>
+          metaResult += taskKey -> Some(metadata)
+          log.info(s"Received cluster metadata for $taskKey")
+          taskData.get(taskKey) match {
+            case Some(cluster) =>
+              opsCenterActor ! OpsCenterClusterInfoActor.StartWorkOnCluster(cluster, metadata, taskKey)
+              graphiteKeyspaceActor ! GraphiteKeyspaceMetricsActor.StartWorkOnCluster(cluster,
+                metadata.getKeyspaces.asScala.toList.map(_.getName),
+                taskKey)
+            case None =>
+              log.warning(s"Received cluster metadata for UNKNOWN task identified by $taskKey")
+          }
       }
-      collectResults(requestKey)
+      collectResults(taskKey)
 
-    case ClusterSlowQueryActor.Finished(slowQueries, cluster, group) =>
-      val clusterGroupKey = ClusterGroupKey(cluster.cluster_name, group)
-      slowQueryResult += clusterGroupKey -> slowQueries
-      log.info(s"Received cluster slow query data of $clusterGroupKey")
-      collectResults(clusterGroupKey)
+    case ClusterSlowQueryActor.Finished(slowQueries, taskKey) =>
+      slowQueryResult += taskKey -> slowQueries
+      log.info(s"Received cluster slow query data for $taskKey")
+      collectResults(taskKey)
 
-    case OpsCenterClusterInfoActor.Finished(opsInfo, cluster, meta, group) =>
-      val clusterGroupKey = ClusterGroupKey(cluster.cluster_name, group)
-      opsCenterResults += clusterGroupKey -> opsInfo
-      log.info(s"Received opscenter info of $clusterGroupKey")
-      collectResults(clusterGroupKey)
+    case OpsCenterClusterInfoActor.Finished(opsInfo, taskKey) =>
+      opsCenterResults += taskKey -> opsInfo
+      log.info(s"Received opscenter info for $taskKey")
+      collectResults(taskKey)
 
-    case GraphiteClusterMetricsActor.Finished(metricValues, cluster, group) =>
-      val clusterGroupKey = ClusterGroupKey(cluster.cluster_name, group)
-      graphiteClusterResults += clusterGroupKey -> metricValues
-      log.info(s"Received graphite metrics of $clusterGroupKey")
-      collectResults(clusterGroupKey)
+    case GraphiteClusterMetricsActor.Finished(metricValues, taskKey) =>
+      graphiteClusterResults += taskKey -> metricValues
+      log.info(s"Received graphite metrics for $taskKey")
+      collectResults(taskKey)
 
-    case GraphiteKeyspaceMetricsActor.Finished(metricValues, clusterGroupKey) =>
-      graphiteKeyspaceResults += clusterGroupKey -> metricValues
-      log.info(s"Received graphite keyspace metrics of $clusterGroupKey")
-      collectResults(clusterGroupKey)
+    case GraphiteKeyspaceMetricsActor.Finished(metricValues, taskKey) =>
+      graphiteKeyspaceResults += taskKey -> metricValues
+      log.info(s"Received graphite keyspace metrics for $taskKey")
+      collectResults(taskKey)
 
-    case ClusterUserActor.Finished(userListResponse, cluster, group) =>
-      val clusterGroupKey = ClusterGroupKey(cluster.cluster_name, group)
+    case ClusterUserActor.Finished(userListResponse, taskKey) =>
       userListResponse match {
-        case Left(e) =>
-          log.error(s"Received failed cluster users list of $clusterGroupKey.", e)
-          usersResults += clusterGroupKey -> None
-        case Right(users) =>
-          log.info(s"Receuved user list of $clusterGroupKey")
-          usersResults += clusterGroupKey -> Some(users)
+        case Failure(e) =>
+          log.error(s"Received failed cluster users list for $taskKey.", e)
+          usersResults += taskKey -> None
+        case Success(users) =>
+          log.info(s"Received user list for $taskKey")
+          usersResults += taskKey -> Some(users)
       }
-      collectResults(clusterGroupKey)
+      collectResults(taskKey)
   }
 
-  implicit class LogWaiting[K,V](wrapped: mutable.Map[K, V]){
+  implicit class GetOrActionMap[K,V](wrapped: mutable.Map[K, V]){
     def getOrAction(key:K, action: =>Unit): Option[V] ={
       val result = wrapped.get(key)
       if (result.isEmpty)
@@ -111,7 +118,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
     }
   }
 
-  def collectResults(key: ClusterGroupKey): Unit ={
+  def collectResults(key: ClusterActorTaskKey): Unit ={
     val clusterOption = taskData.getOrAction(key,
       log.warning(s"Finished collecting all information of $key, but because of earlier failures (no task data defined), failed to construct clusterInfo")
     )
