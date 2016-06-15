@@ -7,8 +7,9 @@ import team.supernova.actor.HubbleActor.Start
 import team.supernova.actor.collect.CassandraClusterGroup
 import team.supernova.cassandra.ClusterEnv
 import team.supernova.confluence.ConfluenceToken
-import team.supernova.graphite.{GraphiteConfig, GraphiteLogin, GraphiteMetricConfig, GraphitePlotConfig}
+import team.supernova.graphite._
 import team.supernova.users.UserNameValidator
+import team.supernova.validation.Severity
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -58,12 +59,23 @@ object HubbleApp extends App {
     )
   }
 
+  def toMetricCheck(severity: String, cf: Config): GraphiteMetricCheckConfig = {
+    new GraphiteMetricCheckConfig(
+      cf.getString("name"),
+      cf.getString("details"),
+      cf.getString("comparison"),
+      cf.getDouble("threshold"),
+      severity)
+  }
+
   def toMetric(cf: Config): GraphiteMetricConfig = {
     new GraphiteMetricConfig(
       cf.getString("url"),
       cf.getString("name"),
       if (!cf.hasPath("func")) None else Some(cf.getString("func")),
-      if (!cf.hasPath("format")) None else Some(cf.getString("format"))
+      if (!cf.hasPath("format")) None else Some(cf.getString("format")),
+      (if (!cf.hasPath("warnings")) List() else cf.getConfigList("warnings").map(toMetricCheck(Severity.WARNING, _)).toList) ++
+        (if (!cf.hasPath("errors")) List() else cf.getConfigList("warnings").map(toMetricCheck(Severity.ERROR, _)).toList)
     )
   }
 

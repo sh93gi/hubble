@@ -11,12 +11,12 @@ object AuthorizedGraphiteReader{
   def retrieveAll(graphiteLogin: GraphiteLogin, metrics:List[GraphiteMetricConfig], params:Map[String, String]):List[MetricResult]={
     metrics.map(metric =>
       (
-        MetricDefinition(metric.name, metric.func, metric.format),
+        MetricDefinition(metric),
         new AuthorizedGraphiteReader(metric.url_template, graphiteLogin.graphite_uname, graphiteLogin.graphite_pword)
         ))
       .map { case (definition, reader) =>
         reader.retrieve(params) match {
-          case (source, values) => definition.process(source, values)
+          case (source, values) => definition.process(source, values, params)
         }
       }
   }
