@@ -15,19 +15,15 @@ Hubble collects the following data from your cluster, and creates a Confluence t
 
 
 ## Getting Started
-This project uses scala config. You need to setup ```application.conf``` in the resource folder. 
-There is ```application.conf.example``` file available in the resource folder that explains how to do this. ```application.conf.example``` is in typesafe HOCON format. 
+This project uses scala config. You need to setup ```application.conf``` in your resource folder to be able to run the application.
+There is an ```application.conf.example``` file available in the resource folder that explains how to do this. ```application.conf.example``` is in typesafe HOCON format.
 Locations that this file should be inserted are: 
 ```
 hubble-core/src/main/resources
-hubble-core/src/test/resources
-hubble-reporting/src/test/resources
 ```
-By adding to ```hubble-core/src/main/resources```, you can run the application locally. Use ```ClusterInfoApp``` located in ```hubble-core``` as main.
-By adding to ```hubble-core/src/test/resources``` and ```hubble-reporting/src/test/resources``` you can test the whole application.
+By adding to ```hubble-core/src/main/resources```, you can run the application locally. Use ```HubbleApp``` located in ```hubble-core``` as main.
 
 ## Packaging and running the application
-after adding ```application.conf``` to test resources, run 
 ```
  mvn clean install 
 ```
@@ -39,9 +35,7 @@ You can run the jar by providing ```application.conf``` from outside. example:
 java -Dconfig.file='{some-location}/application.conf' -jar hubble-core-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
-
-
-## Confluence 
+## Confluence
 
 If you don't have [Confluence](https://www.atlassian.com/software/confluence) already installed or want to setup a local development environment then we recommend using docker and setup a [Confluence container](https://hub.docker.com/r/cptactionhank/atlassian-confluence/). 
 
