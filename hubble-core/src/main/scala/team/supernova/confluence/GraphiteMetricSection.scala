@@ -78,9 +78,7 @@ object GraphiteMetricSection {
     header ++
     <p>
       <table>
-        <tbody><tr><th>Cluster</th>{metricTable.headerCells()}</tr>{multimetrics.toList.sortBy(_._1).map(kv => {
-          val clusterName = kv._1
-          val clusterMetrics = kv._2
+        <tbody><tr><th>Cluster</th>{metricTable.headerCells()}</tr>{multimetrics.toList.sortBy(_._1).map { case (clusterName, clusterMetrics) =>
           val link = keyToUrl.map(_ (clusterName))
           val link_pre = if (link.isDefined) {
             scala.xml.Unparsed(s"""<a href="${scala.xml.Utility.escape(link.get)}">""")
@@ -97,7 +95,7 @@ object GraphiteMetricSection {
               {link_pre ++ scala.xml.Utility.escape(clusterName) ++ link_post}
             </td>{metricTable.contentCells(clusterMetrics)}
           </tr>
-        })}
+        }}
         </tbody>
       </table>
     </p>
