@@ -6,19 +6,19 @@ import java.util.Base64
 
 import org.slf4j.LoggerFactory
 import team.supernova._
-import team.supernova.cassandra.ClusterEnv
 
 object AuthorizedGraphiteReader{
-  def retrieveAll(cluster: ClusterEnv):List[MetricResult]={
-    cluster.graphiteConfig.graphite_metrics.map(metric =>
+  def retrieveAll(graphiteLogin: GraphiteLogin, metrics:List[GraphiteMetricConfig], params:Map[String, String]):List[MetricResult]={
+    metrics.map(metric =>
       (
         MetricDefinition(metric.name, metric.func, metric.format),
-        new AuthorizedGraphiteReader(metric.url_template, cluster.graphiteConfig.graphite_uname, cluster.graphiteConfig.graphite_pword)
+        new AuthorizedGraphiteReader(metric.url_template, graphiteLogin.graphite_uname, graphiteLogin.graphite_pword)
         ))
-      .map(a => {
-        val graphiteResult = a._2.retrieve(cluster.graphite)
-        a._1.process(graphiteResult._1, graphiteResult._2)
-      })
+      .map { case (definition, reader) =>
+        reader.retrieve(params) match {
+          case (source, values) => definition.process(source, values)
+        }
+      }
   }
 }
 class AuthorizedGraphiteReader(url_template: String, graphiteUserName: String, graphitePassword: String) {

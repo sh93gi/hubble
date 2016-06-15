@@ -16,12 +16,25 @@ object ConfluenceNaming {
     s"/display/$project/${createMetricsName(cluster).replace(" ","+")}"
   }
 
+  def createMetricsLink(project: String, cluster:String): String = {
+    s"/display/$project/${createMetricsName(cluster).replace(" ","+")}"
+  }
+
+
   def createMetricsName(cluster: ClusterInfo): String = {
-    createName(cluster) + "_metrics"
+    createName(cluster.cluster_name) + "_metrics"
+  }
+
+  def createMetricsName(cluster_name: String): String = {
+    createName(cluster_name) + "_metrics"
   }
 
   def createName(cluster: ClusterInfo): String = {
-    cluster.cluster_name.toUpperCase
+    createName(cluster.cluster_name)
+  }
+
+  def createName(cluster_name: String): String = {
+    cluster_name.toUpperCase
   }
 
   def createName(cluster: ClusterInfo, keyspace: Keyspace): String = {
@@ -33,10 +46,18 @@ object ConfluenceNaming {
   }
 
   def createMetricsLink(project: String, clusterInfo: ClusterInfo, keyspace: Keyspace): String = {
+    createMetricsLink(project, clusterInfo.cluster_name, keyspace.keyspace_name)
+  }
+
+  def createMetricsLink(project: String, clusterInfo: String, keyspace: String): String = {
     s"/display/$project/${createMetricsName(clusterInfo, keyspace).replace(" ","+")}"
   }
 
   def createMetricsName(clusterInfo: ClusterInfo, keyspace: Keyspace): String = {
+    createName(clusterInfo, keyspace) + " - metrics"
+  }
+
+  def createMetricsName(clusterInfo: String, keyspace: String): String = {
     createName(clusterInfo, keyspace) + " - metrics"
   }
 

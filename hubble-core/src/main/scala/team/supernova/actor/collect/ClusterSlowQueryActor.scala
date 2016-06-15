@@ -5,8 +5,8 @@ import com.datastax.driver.core.exceptions.{ReadTimeoutException, UnauthorizedEx
 import team.supernova.cassandra.{CassandraSlowQueryApi, ClusterEnv, ClusterSlowQueries}
 
 object ClusterSlowQueryActor{
-  case class StartWorkOnCluster(clusterEnv: ClusterEnv, group: String)
-  case class Finished(clusterResults: ClusterSlowQueries, clusterEnv: ClusterEnv, group: String)
+  case class StartWorkOnCluster(clusterEnv: ClusterEnv, taskKey: ClusterActorTaskKey)
+  case class Finished(clusterResults: ClusterSlowQueries, taskKey: ClusterActorTaskKey)
 
   def props(requester: ActorRef) : Props =
     Props(new ClusterSlowQueryActor(requester))
@@ -40,9 +40,9 @@ class ClusterSlowQueryActor(requester: ActorRef)  extends Actor with ActorLoggin
   }
 
   override def receive: Receive = {
-    case ClusterSlowQueryActor.StartWorkOnCluster(cluster, group) =>
+    case ClusterSlowQueryActor.StartWorkOnCluster(cluster, taskKey) =>
       log.info(s"Get cluster slow queries for ${cluster.cluster_name}")
-      sender ! ClusterSlowQueryActor.Finished(process(cluster), cluster, group)
+      sender ! ClusterSlowQueryActor.Finished(process(cluster), taskKey)
   }
 
 }

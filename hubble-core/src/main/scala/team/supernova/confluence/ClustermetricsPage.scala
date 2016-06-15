@@ -18,7 +18,12 @@ object ClusterMetricsPage {
       <p>{
         GraphitePlotSection.present(clusterInfo.cluster.graphiteConfig.graphite_plot, clusterInfo.cluster.graphite)}
         {SlowQuerySections.presentClusterSlows(clusterInfo, expandBlock = false)}
-        {GraphiteMetricSection.singleMetricTable(clusterInfo.metrics)}
+        {GraphiteMetricSection.singleMetricTable(clusterInfo.metrics, <h1>Cluster Metrics</h1>)}
+        { GraphiteMetricSection.combinedMetricTable(
+        clusterInfo.keyspaceMetrics,
+        <h1>Keyspace Metrics Summary</h1>,
+        Some(ConfluenceNaming.createMetricsLink(project, clusterInfo.cluster_name, _))
+      )}
       </p>
       <h1>Keyspaces</h1>
       <p>

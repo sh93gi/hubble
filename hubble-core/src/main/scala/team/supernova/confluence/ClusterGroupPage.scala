@@ -12,7 +12,7 @@ object ClusterGroupPage {
 
   def generateClusterGroupPage(groupClusters: GroupClusters, project: String): String=  {
 
-    val listKeyspace: Seq[String] = groupClusters.clusterInfoList.flatMap(_.keyspaces).map(_.keyspace_name).sorted
+    val listKeyspace: Seq[String] = groupClusters.clusterInfoList.flatMap(_.keyspaces).map(_.keyspace_name).distinct.sorted
 
     //this must not be sorted as it is already sorted - just need the list of names!
     val listClusterName: List[String] = groupClusters.clusterInfoList.foldLeft(List[String]()){(a,b) => a ++ List(b.cluster_name)}
@@ -44,7 +44,10 @@ object ClusterGroupPage {
           </tbody>
         </table>
       </p>
-      { GraphiteMetricSection.combinedMetricTable(groupClusters.clusterInfoList.map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.metrics)).toMap)}
+      { GraphiteMetricSection.combinedMetricTable(groupClusters.clusterInfoList.map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.metrics)).toMap,
+      <h1>Cluster Metrics Summary</h1>,
+        Some(ConfluenceNaming.createMetricsLink(project, _))
+    )}
       <h1>Cluster Yaml comparison</h1>
       {
         val keyVsYaml = groupClusters.clusterInfoList.toList

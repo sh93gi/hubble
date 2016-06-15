@@ -4,9 +4,11 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.datastax.driver.core.Metadata
 import team.supernova.cassandra.{CassandraClusterApi, ClusterEnv}
 
+import scala.util.Try
+
 object ClusterMetadataActor{
-  case class StartWorkOnCluster(cluster: ClusterEnv, group: String)
-  case class Finished(clusterResults: Either[Throwable, Metadata], cluster: ClusterEnv, group: String)
+  case class StartWorkOnCluster(cluster: ClusterEnv, taskKey: ClusterActorTaskKey)
+  case class Finished(clusterResults: Try[Metadata], taskKey: ClusterActorTaskKey)
 
   def props(requester: ActorRef) : Props =
     Props(new ClusterMetadataActor(requester))
@@ -14,19 +16,15 @@ object ClusterMetadataActor{
 
 class ClusterMetadataActor(requester: ActorRef)  extends Actor with ActorLogging {
 
-  def process(cluster: ClusterEnv, group: String): Either[Throwable, Metadata] =
+  def process(cluster: ClusterEnv): Try[Metadata] =
   {
-    try {
-      Right(new CassandraClusterApi(cluster).metadata())
-    } catch {
-      case e: Throwable => Left(e)
-    }
+    Try( new CassandraClusterApi(cluster).metadata())
   }
 
   override def receive: Receive = {
-    case ClusterMetadataActor.StartWorkOnCluster(cluster, group) =>
+    case ClusterMetadataActor.StartWorkOnCluster(cluster, taskKey) =>
       log.info(s"Get cluster metadata for ${cluster.cluster_name}")
-      sender ! ClusterMetadataActor.Finished(process(cluster, group), cluster, group)
+      sender ! ClusterMetadataActor.Finished(process(cluster), taskKey)
   }
 
 }

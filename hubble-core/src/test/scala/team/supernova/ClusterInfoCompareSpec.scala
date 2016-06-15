@@ -9,7 +9,7 @@ class ClusterInfoCompareSpec extends FunSpecLike with Matchers {
 
   def clusterWithSequence(group: String, clusterName: String, sequence: Int): ClusterInfo = {
     val mockClusterEnv = getMockClusterEnv(clusterName, sequence)
-    ClusterInfo(clusterName, schemaAgreement = true,Set(),List(), null, None, List(), Set(), mockClusterEnv, group)
+    ClusterInfo(clusterName, schemaAgreement = true, Set(), List(), null, None, List(), Map(), Set(), mockClusterEnv, group)
   }
 
   private def getMockClusterEnv(clusterName: String, sequence: Int): ClusterEnv = {

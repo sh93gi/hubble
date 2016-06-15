@@ -7,7 +7,7 @@ import team.supernova.actor.HubbleActor.Start
 import team.supernova.actor.collect.CassandraClusterGroup
 import team.supernova.cassandra.ClusterEnv
 import team.supernova.confluence.ConfluenceToken
-import team.supernova.graphite.{GraphiteConfig, GraphiteMetricConfig, GraphitePlotConfig}
+import team.supernova.graphite.{GraphiteConfig, GraphiteLogin, GraphiteMetricConfig, GraphitePlotConfig}
 import team.supernova.users.UserNameValidator
 
 import scala.collection.JavaConversions._
@@ -76,8 +76,9 @@ object HubbleApp extends App {
     val graphite_plot = toGraphitePlotConfig(config.getConfig("hubble.graphite.plot"))
     val graphite_uname = config.getString("hubble.graphite.username")
     val graphite_pword = config.getString("hubble.graphite.password")
-    val graphite_metrics = config.getConfigList("hubble.graphite.metrics").map(toMetric).toList
-    GraphiteConfig(graphite_plot, graphite_metrics, graphite_uname, graphite_pword)
+    val cluster_metrics = config.getConfigList("hubble.graphite.cluster_metrics").map(toMetric).toList
+    val keyspace_metrics = config.getConfigList("hubble.graphite.keyspace_metrics").map(toMetric).toList
+    GraphiteConfig(graphite_plot, cluster_metrics, keyspace_metrics, GraphiteLogin(graphite_uname, graphite_pword))
   }
 
   def mapConfigToCassandraClusterGroup(config: Config): List[CassandraClusterGroup] = {
