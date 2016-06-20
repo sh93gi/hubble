@@ -20,7 +20,8 @@ class GraphiteKeyspaceMetricsActor(requester: ActorRef)  extends Actor with Acto
         AuthorizedGraphiteReader.retrieveAll(
           cluster.graphiteConfig.graphite_login,
           cluster.graphiteConfig.graphite_keyspace_metrics,
-          cluster.graphite.+(("keyspace", keyspace)))
+          cluster.graphite.+(("keyspace", keyspace)).+(("cluster", cluster.cluster_name))
+        )
       }catch {
         case e:Throwable =>
           log.warning(e.getMessage)

@@ -45,27 +45,37 @@ hubble {
         {
             name =    the name of the metric, used to show it in results/messages, the code appends "&rawData=true" to the url
             url =     the graphite url template, in which '${key}' will be replaced by the corresponding value defined in the hubble.cassandra.clusters.graphite map
+                      furthermore, ${cluster} will be replaced by the cluster name for which metrics are collected
             func =    optional string identifier of the aggregation function
                       one of {"max","min","avg","delta"}
                       delta takes last - first value
                       the function is applied to each serie returned by graphite to obtain one value per serie
                       subsequently, the function is applied to all series, to obtain one value for this metric
             format =  optional string identifier of the value formatting function
-                      default is the toString method, alternatively one can use 'bytecount' to get TB/GB/MB/KB
+                      default is the toString method,
+                      alternatively one can use 'bytecount' to get TB/GB/MB/KB
             warnings = [ optional (default empty) list of warnings to be triggered based on the retrieved graphite metric
                  {
                   name =        the name of the warning
                   details =     the detailed description of the warning, the same template key's can be used as in the url.
-                  comparison =  the comparison used, can be one of 'gt' (greater than), 'lt' (less than), 'eq' (equal), 'neq' not equal
-                  threshold =   the limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is true.
+                  comparison =  the comparison used, can be one of :
+                                'gt' (greater than),
+                                'lt' (less than),
+                                'eq' (equal),
+                                'neq' not equal
+                  threshold =   the (numeric) limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is true.
                 }
             ]
             errors = [ optional (default empty) list of errors to be triggered based on the retrieved graphite metric
                  {
                   name =        the name of the warning
                   details =     the detailed description of the warning, the same template key's can be used as in the url.
-                  comparison =  the comparison used, can be one of 'gt' (greater than), 'lt' (less than), 'eq' (equal), 'neq' not equal
-                  threshold =   the limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is true.
+                  comparison =  the comparison used, can be one of :
+                                'gt' (greater than),
+                                'lt' (less than),
+                                'eq' (equal),
+                                'neq' not equal
+                  threshold =   the (numeric) limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is true.
                 }
             ]
         }
@@ -86,16 +96,24 @@ hubble {
                  {
                   name =        the name of the warning
                   details =     the detailed description of the warning, the same template key's can be used as in the url.
-                  comparison =  the comparison used, can be one of 'gt' (greater than), 'lt' (less than), 'eq' (equal), 'neq' not equal
-                  threshold =   the limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is false.
+                  comparison =  the comparison used, can be one of :
+                                'gt' (greater than),
+                                'lt' (less than),
+                                'eq' (equal),
+                                'neq' not equal
+                  threshold =   the (numeric) limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is false.
                 }
             ]
             errors = [ optional (default empty) list of errors to be triggered based on the retrieved graphite metric
                  {
                   name =        the name of the warning
                   details =     the detailed description of the warning, the same template key's can be used as in the url.
-                  comparison =  the comparison used, can be one of 'gt' (greater than), 'lt' (less than), 'eq' (equal), 'neq' not equal
-                  threshold =   the limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is false.
+                  comparison =  the comparison used, can be one of :
+                                'gt' (greater than),
+                                'lt' (less than),
+                                'eq' (equal),
+                                'neq' not equal
+                  threshold =   the (numeric) limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is false.
                 }
             ]
         }
