@@ -29,13 +29,12 @@ object MetricDefinition{
       config.checks.map(getCheckCreationImplementation) )
   }
 
-  def getCheckCreationImplementation(config: GraphiteMetricCheckConfig) : (Double, Map[String, String] )=>Check = {
+  def getCheckCreationImplementation(config: GraphiteMetricCheckConfig) : (Double, Map[String, String] )=> Check =
     (value:Double, templateArgs : Map[String, String])=> {
       val comparison = getComparisonFuncImplementation(config.check)
       val details = new StringTemplate(config.details).fillWith(templateArgs)
       Check(config.name, details, comparison(value, config.threshold), config.severity)
     }
-  }
 
   def getComparisonFuncImplementation(funcDef:String): (Double, Double)=>Boolean = {
     funcDef.toLowerCase match{
