@@ -75,7 +75,7 @@ object HubbleApp extends App {
       if (!cf.hasPath("func")) None else Some(cf.getString("func")),
       if (!cf.hasPath("format")) None else Some(cf.getString("format")),
       (if (!cf.hasPath("warnings")) List() else cf.getConfigList("warnings").map(toMetricCheck(Severity.WARNING, _)).toList) ++
-        (if (!cf.hasPath("errors")) List() else cf.getConfigList("warnings").map(toMetricCheck(Severity.ERROR, _)).toList)
+        (if (!cf.hasPath("errors")) List() else cf.getConfigList("errors").map(toMetricCheck(Severity.ERROR, _)).toList)
     )
   }
 
