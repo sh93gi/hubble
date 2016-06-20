@@ -135,7 +135,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
     val opsInfoElement = opsCenterResults.getOrAction(key,
       log.info(s"Still waiting for opscenter info of $key"))
 
-    val graphiteElement = graphiteClusterResults.getOrAction(key,
+  val graphiteClusterElement = graphiteClusterResults.getOrAction(key,
       log.info(s"Still waiting for graphite info of $key"))
 
     val usersElement = usersResults.getOrAction(key,
@@ -148,7 +148,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
       metaElement.isDefined &&
       slowQueryElement.isDefined &&
       opsInfoElement.isDefined &&
-      graphiteElement.isDefined &&
+      graphiteClusterElement.isDefined &&
       usersElement.isDefined &&
       graphiteKeyspaceElement.isDefined
     ) {
@@ -166,7 +166,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
             metaDataValue.getKeyspaces.asScala.toList,
             slowQueryElement.get,
             opsInfoElement.get,
-            graphiteElement.get,
+            graphiteClusterElement.get,
             graphiteKeyspaceElement.get,
             usersElement.get.getOrElse(Set()),
             cluster,

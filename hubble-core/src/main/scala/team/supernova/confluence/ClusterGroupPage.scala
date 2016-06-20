@@ -44,7 +44,7 @@ object ClusterGroupPage {
           </tbody>
         </table>
       </p>
-      { GraphiteMetricSection.combinedMetricTable(groupClusters.clusterInfoList.map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.metrics)).toMap,
+      { GraphiteMetricSection.combinedMetricTable(groupClusters.clusterInfoList.map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.clusterMetrics)).toMap,
       <h1>Cluster Metrics Summary</h1>,
         Some(ConfluenceNaming.createMetricsLink(project, _))
     )}

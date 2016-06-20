@@ -19,14 +19,14 @@ object StringValidation {
   val alphaNumericLowercase=(('a' to 'z') ++ ('0' to '9') ++ "_").toSet
   val alphaNumeric=(('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ "_").toSet
   val alpha=(('a' to 'z') ++ ('A' to 'Z')).toSet
-  def isAlphaNumericLowercase(s:String)=s.forall(alphaNumericLowercase.contains(_))
-  def isAlphaNumeric(s:String)=s.forall(alphaNumeric.contains(_))
+  def isAlphaNumericLowercase(s:String)=s.forall(alphaNumericLowercase.contains)
+  def isAlphaNumeric(s:String)=s.forall(alphaNumeric.contains)
   def startsWithLetter(s:String)=s match {
     case "" => false
-    case _ => s.head.toString.forall(alpha.contains(_))
+    case _ => s.head.toString.forall(alpha.contains)
   }
-  def isNotTooLong(str: String): Boolean=str.size<32
-  def isNotABitLong(str: String): Boolean=str.size<24
+  def isNotTooLong(str: String): Boolean=str.length<32
+  def isNotABitLong(str: String): Boolean=str.length<24
 }
 
 case class Column(columnMetadata: ColumnMetadata, keyType: String) extends Checkable {
@@ -125,6 +125,7 @@ case class Link(from: Table, to: Table, on: String)
 
 case class Keyspace(keyspaceMetaData: KeyspaceMetadata,
                     private val validDCnames: SortedSet[String],
+                    metrics: List[MetricResult],
                     users: Option[Set[String]] = None,
                     userNameValidator: Option[UserNameValidator]= None
                    ) extends Checkable with Ordered[Keyspace] {
@@ -158,6 +159,7 @@ case class Keyspace(keyspaceMetaData: KeyspaceMetadata,
   val dcNames = dataCenter.foldLeft("") { (a, w) => a + " '" + w + "'" }
 
   private val keyspaceUserChecks = if(users.isDefined && userNameValidator.isDefined) userNameValidator.get.keyspaceUserChecks(users.get, keyspace_name) else List()
+  private val keyspaceMetricChecks = metrics.flatMap(_.checks)
 
   val myChecks: List[Check] = List(
     // TODO check DC names are valid
@@ -169,7 +171,7 @@ case class Keyspace(keyspaceMetaData: KeyspaceMetadata,
     Check("KeyspaceName length check", s"Keyspace name is too long: $keyspace_name", StringValidation.isNotTooLong(keyspace_name), Severity.WARNING),
     Check("KeyspaceName length warning", s"Keyspace name is a bit long: $keyspace_name", StringValidation.isNotABitLong(keyspace_name), Severity.INFO),
     Check("KeyspaceName check", s"Keyspace name is not alphanumeric lowercase: $keyspace_name", StringValidation.isAlphaNumericLowercase(keyspace_name), Severity.WARNING)
-  ) ++ keyspaceUserChecks
+  ) ++ keyspaceUserChecks ++ keyspaceMetricChecks
   val children = tables
 }
 
@@ -191,7 +193,7 @@ case class ClusterInfo(cluster_name : String,
                        keyspacesList : List[KeyspaceMetadata],
                        slowQueries: ClusterSlowQueries,
                        opsCenterClusterInfo: Option[OpsCenterClusterInfo],
-                       metrics: List[MetricResult],
+                       clusterMetrics: List[MetricResult],
                        keyspaceMetrics: Map[String, List[MetricResult]],
                        users: Set[String],
                        cluster: ClusterEnv,
@@ -202,7 +204,7 @@ case class ClusterInfo(cluster_name : String,
 
   lazy val dataCenter: SortedSet[String] = allHosts.groupBy(h => h.getDatacenter).keys.to
   lazy val keyspaces: SortedSet[Keyspace] = keyspacesList.map(i => {
-    new Keyspace(i, dataCenter, Some(users), Some(cluster.usernameValidator))
+    new Keyspace(i, dataCenter, keyspaceMetrics.getOrElse(i.getName, List()), Some(users), Some(cluster.usernameValidator))
   }).to
 
   lazy val hosts = allHosts.map {
@@ -217,10 +219,11 @@ case class ClusterInfo(cluster_name : String,
 
 
   private lazy val userNamingChecks = cluster.usernameValidator.namingConventionChecks(users)
+  private lazy val metricChecks = clusterMetrics.flatMap(_.checks)
 
   lazy val myChecks: List[Check] = List(
     Check("Cluster agreement check", s"$cluster_name schema agreement issues!", schemaAgreement, Severity.ERROR)
-  ) ++ userNamingChecks
+  ) ++ userNamingChecks ++ metricChecks
 
   lazy val children = keyspaces.toList
 

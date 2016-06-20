@@ -18,7 +18,7 @@ object ClusterMetricsPage {
       <p>{
         GraphitePlotSection.present(clusterInfo.cluster.graphiteConfig.graphite_plot, clusterInfo.cluster.graphite)}
         {SlowQuerySections.presentClusterSlows(clusterInfo, expandBlock = false)}
-        {GraphiteMetricSection.singleMetricTable(clusterInfo.metrics, <h1>Cluster Metrics</h1>)}
+        {GraphiteMetricSection.singleMetricTable(clusterInfo.clusterMetrics, <h1>Cluster Metrics</h1>)}
         { GraphiteMetricSection.combinedMetricTable(
         clusterInfo.keyspaceMetrics,
         <h1>Keyspace Metrics Summary</h1>,
@@ -84,7 +84,7 @@ object ClusterMetricsPage {
                 {table._1}
               </td>
               <td>
-                {scala.xml.Unparsed(table._2.toSeq.sortBy(_._3).foldLeft("") { (c, n) => c + s"<p>${n._3} - ${
+                {scala.xml.Unparsed(table._2.sortBy(_._3).foldLeft("") { (c, n) => c + s"<p>${n._3} - ${
                 if (n._5.toInt.equals(-1)) {
                   " ERROR retrieving stats"
                 } else {
