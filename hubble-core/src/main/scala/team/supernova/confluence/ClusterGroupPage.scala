@@ -46,6 +46,7 @@ object ClusterGroupPage {
       </p>
       { GraphiteMetricSection.combinedMetricTable(groupClusters.clusterInfoList.map(clusterInfo=>(clusterInfo.cluster_name, clusterInfo.clusterMetrics)).toMap,
       <h1>Cluster Metrics Summary</h1>,
+      "Cluster",
         Some(ConfluenceNaming.createMetricsLink(project, _))
     )}
       <h1>Cluster Yaml comparison</h1>
