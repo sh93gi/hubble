@@ -36,8 +36,9 @@ class ClusterGroupHierarchy(project: String, page: Page, tokenPage: RemotePage){
   }
 
   def updateToken(){
-    tokenPage.setContent(tokenContent)
-    page.update(tokenPage, false)
+    val newTokenPage = page.read(tokenPage.getId)
+    newTokenPage.setContent(tokenContent)
+    page.update(newTokenPage, false)
     log.info(s"TOKEN page updated!")
   }
 

@@ -96,7 +96,7 @@ object Confluence {
       Some(pageObject.read(project, pageName))
       } catch{
         case e: Exception =>
-          log.info(s"Failed to find $pageName because of ${e.getMessage}. Will assume it doesn't exist.")
+          log.info(s"Failed to find $pageName because of ${e.getMessage} (${e.getClass}). Will assume it doesn't exist.")
           None
       }
   }

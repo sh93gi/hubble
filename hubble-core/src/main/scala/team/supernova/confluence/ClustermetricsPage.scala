@@ -22,6 +22,7 @@ object ClusterMetricsPage {
         { GraphiteMetricSection.combinedMetricTable(
         clusterInfo.keyspaceMetrics,
         <h1>Keyspace Metrics Summary</h1>,
+        "Keyspace",
         Some(ConfluenceNaming.createMetricsLink(project, clusterInfo.cluster_name, _))
       )}
       </p>
