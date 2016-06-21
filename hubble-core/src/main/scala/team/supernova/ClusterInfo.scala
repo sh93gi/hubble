@@ -125,7 +125,7 @@ case class Link(from: Table, to: Table, on: String)
 
 case class Keyspace(keyspaceMetaData: KeyspaceMetadata,
                     private val validDCnames: SortedSet[String],
-                    metrics: List[MetricResult],
+                    metrics: List[MetricResult] = List(),
                     users: Option[Set[String]] = None,
                     userNameValidator: Option[UserNameValidator]= None
                    ) extends Checkable with Ordered[Keyspace] {
