@@ -58,6 +58,7 @@ hubble {
                  {
                   name =        the name of the warning
                   details =     the detailed description of the warning, the same template key's can be used as in the url.
+                                furthermore, ${value} will be replaced by the metric value
                   comparison =  the comparison used, can be one of :
                                 'gt' (greater than),
                                 'lt' (less than),
@@ -70,6 +71,7 @@ hubble {
                  {
                   name =        the name of the warning
                   details =     the detailed description of the warning, the same template key's can be used as in the url.
+                                furthermore, ${value} will be replaced by the metric value
                   comparison =  the comparison used, can be one of :
                                 'gt' (greater than),
                                 'lt' (less than),
@@ -96,6 +98,7 @@ hubble {
                  {
                   name =        the name of the warning
                   details =     the detailed description of the warning, the same template key's can be used as in the url.
+                                furthermore, ${value} will be replaced by the metric value
                   comparison =  the comparison used, can be one of :
                                 'gt' (greater than),
                                 'lt' (less than),
@@ -108,6 +111,7 @@ hubble {
                  {
                   name =        the name of the warning
                   details =     the detailed description of the warning, the same template key's can be used as in the url.
+                                furthermore, ${value} will be replaced by the metric value
                   comparison =  the comparison used, can be one of :
                                 'gt' (greater than),
                                 'lt' (less than),

@@ -15,7 +15,7 @@ class MetricDefinition(val name: String, aggregator: Iterable[Double]=>Double, f
         Some(aggregator(values.map(aggregator(_))))
     MetricResult(name, metricVal, formatter, metricSource,
       metricVal match {
-        case Some(value) => checks.map(_(value, templateArgs + (("value", value.toString))))
+        case Some(value) => checks.map(_(value, templateArgs + (("value", formatter(value)))))
         case None => List()
       })
   }
