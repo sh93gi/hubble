@@ -25,27 +25,27 @@ class MetricDefinitionSpec
     }
 
     it("should succeed on less than check") {
-      verifyMetricCheck(6, "lt", 7, hasPassed = true)
+      verifyMetricCheck(6, "lt", 7, hasPassed = false)
     }
 
     it("should fail on less than check") {
-      verifyMetricCheck(6, "lt", 5, hasPassed = false)
+      verifyMetricCheck(6, "lt", 5, hasPassed = true)
     }
 
     it("should fail on equality check") {
-      verifyMetricCheck(6, "eq", 5, hasPassed = false)
+      verifyMetricCheck(6, "eq", 5, hasPassed = true)
     }
 
     it("should succeed on equality check") {
-      verifyMetricCheck(6, "eq", 6, hasPassed = true)
+      verifyMetricCheck(6, "eq", 6, hasPassed = false)
     }
 
     it("should succeed on greater than check") {
-      verifyMetricCheck(6, "gt", 5, hasPassed = true)
+      verifyMetricCheck(6, "gt", 5, hasPassed = false)
     }
 
     it("should fail on greater than check") {
-      verifyMetricCheck(6, "gt", 7, hasPassed = false)
+      verifyMetricCheck(6, "gt", 7, hasPassed = true)
     }
   }
 }
