@@ -68,7 +68,7 @@ object ClusterGroupHierarchy {
     val tokenPageName = mainPageName + "-TOKEN"
 
     //read token page
-    val tokenPage: RemotePage = Confluence.confluenceCreateTokenLessPage(project, tokenPageName, "", page, clusterGroupPage, notify = false)
+    val tokenPage: RemotePage = Confluence.confluenceReadOrCreate(project, tokenPageName, page, clusterGroupPage)
 
     val hierarchy = new ClusterGroupHierarchy(project, page, tokenPage)
     //Always update the Cluster page

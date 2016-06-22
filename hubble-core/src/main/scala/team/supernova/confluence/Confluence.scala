@@ -49,6 +49,25 @@ object Confluence {
     new java.math.BigInteger(1, m.digest()).toString(16)
   }
 
+  def confluenceReadOrCreate(project: String, pageName: String, pageObject: Page, parentPage: RemotePage) : RemotePage = {
+    try {
+      log.info(s"Reading: $pageName")
+      pageObject.read(project, pageName)
+    }
+    catch {
+      case e: Exception =>
+        log.info(s"Failed to read $pageName because of ${e.getMessage}. Will create it.")
+        val newPage: RemotePage = new RemotePage
+        newPage.setContent("")
+        newPage.setTitle(pageName)
+        newPage.setParentId(parentPage.getId)
+        newPage.setSpace(parentPage.getSpace)
+        pageObject.store(newPage)
+        log.info(s"$pageName created!")
+        pageObject.read(project, pageName) //now we have an id
+    }
+  }
+
   def confluenceCreateTokenLessPage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, notify: Boolean=true) : RemotePage = {
     try {
       log.info(s"Updating: $pageName")
