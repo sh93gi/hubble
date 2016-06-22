@@ -89,7 +89,7 @@ class ClusterInfoActor(requester: ActorRef) extends Actor with ActorLogging {
 
     case GraphiteClusterMetricsActor.Finished(metricValues, taskKey) =>
       graphiteClusterResults += taskKey -> metricValues
-      log.info(s"Received graphite metrics for $taskKey")
+      log.info(s"Received graphite cluster metrics for $taskKey")
       collectResults(taskKey)
 
     case GraphiteKeyspaceMetricsActor.Finished(metricValues, taskKey) =>

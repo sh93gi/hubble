@@ -15,18 +15,17 @@ object ClusterMetricsPage {
       <h1>Cluster:
         {clusterInfo.cluster_name}
       </h1>
-      <p>{
+      {
         GraphitePlotSection.present(clusterInfo.cluster.graphiteConfig.graphite_plot, clusterInfo.cluster.graphite)}
         {SlowQuerySections.presentClusterSlows(clusterInfo, expandBlock = false)}
         {GraphiteMetricSection.singleMetricTable(clusterInfo.clusterMetrics, <h1>Cluster Metrics</h1>)}
         { GraphiteMetricSection.combinedMetricTable(
-        clusterInfo.keyspaceMetrics,
-        <h1>Keyspace Metrics Summary</h1>,
-        "Keyspace",
-        Some(ConfluenceNaming.createMetricsLink(project, clusterInfo.cluster_name, _))
-      )}
-      </p>
-      <h1>Keyspaces</h1>
+            clusterInfo.keyspaceMetrics,
+            <h1>Keyspace Metrics Summary</h1>,
+            "Keyspace",
+            Some(ConfluenceNaming.createMetricsLink(project, clusterInfo.cluster_name, _))
+          ) }
+      <h1>Keyspace Slow Queries</h1>
       <p>
         <table>
           <tbody>
@@ -51,7 +50,6 @@ object ClusterMetricsPage {
     clusterInfo.keyspaces
       .filter(k=>SlowQuerySections.willPresentKeySpaceSlows(clusterInfo, k.keyspace_name))
       .toSeq.flatMap(k => {
-
         val href = ConfluenceNaming.createLink(project, clusterInfo, k)
         <tr>
           <td>

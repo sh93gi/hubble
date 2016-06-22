@@ -101,7 +101,7 @@ hubble {
                                 'lt' (less than),
                                 'eq' (equal),
                                 'neq' not equal
-                  threshold =   the (numeric) limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is false.
+                  threshold =   the (numeric) limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is true.
                 }
             ]
             errors = [ optional (default empty) list of errors to be triggered based on the retrieved graphite metric
@@ -113,7 +113,7 @@ hubble {
                                 'lt' (less than),
                                 'eq' (equal),
                                 'neq' not equal
-                  threshold =   the (numeric) limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is false.
+                  threshold =   the (numeric) limit to which the metric is compared. A warning will be created if  [received_value] [comparison] [threshold] is true.
                 }
             ]
         }

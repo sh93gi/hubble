@@ -15,7 +15,7 @@ class MetricDefinition(val name: String, aggregator: Iterable[Double]=>Double, f
         Some(aggregator(values.map(aggregator(_))))
     MetricResult(name, metricVal, formatter, metricSource,
       metricVal match {
-        case Some(value) => checks.map(_(value, templateArgs))
+        case Some(value) => checks.map(_(value, templateArgs + (("value", value.toString))))
         case None => List()
       })
   }
@@ -33,7 +33,7 @@ object MetricDefinition{
     (value:Double, templateArgs : Map[String, String])=> {
       val comparison = getComparisonFuncImplementation(config.check)
       val details = new StringTemplate(config.details).fillWith(templateArgs)
-      Check(config.name, details, comparison(value, config.threshold), config.severity)
+      Check(config.name, details, hasPassed = !comparison(value, config.threshold), config.severity)
     }
 
   def getComparisonFuncImplementation(funcDef:String): (Double, Double)=>Boolean = {
