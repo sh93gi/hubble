@@ -8,15 +8,25 @@ import org.slf4j.LoggerFactory
 import team.supernova._
 
 object AuthorizedGraphiteReader{
-  def retrieveAll(graphiteLogin: GraphiteLogin, metrics:List[GraphiteMetricConfig], params:Map[String, String]):List[MetricResult]={
-  metrics.map(metric=>
-    retrieve(
-      graphiteLogin,
-      metric.url_template,
-      params) match{
-      case (source, values) => MetricDefinition(metric).process(source, values, params)
+  def retrieveAll(graphiteLogin: GraphiteLogin, metrics:List[GraphiteMetricConfig], paramList:List[Map[String, String]]):List[MetricResult]={
+    if (paramList.isEmpty)
+      return List()
+    metrics.map(metric=>{
+      val paramResults = paramList.map{ case (params)=>
+        retrieve(
+          graphiteLogin,
+          metric.url_template,
+          params) match{
+          case (source, values) =>
+            MetricDefinition(metric).process(source, values, params)
+        }
+      }
+      paramResults.find(_.value.isDefined) match{
+        case None=>paramResults.head
+        case Some(definedMetric)=>definedMetric
+      }
     }
-  )
+    )
   }
 
   def retrieve(graphiteLogin: GraphiteLogin, urlTemplate: String, params:Map[String, String]):

@@ -15,10 +15,12 @@ class GraphiteClusterMetricsActor(requester: ActorRef)  extends Actor with Actor
 
   def process(cluster: ClusterEnv): List[MetricResult] = {
     try {
+      val graphiteParamsMap = cluster.graphite.map(Map(("cluster", cluster.cluster_name))++_)
       AuthorizedGraphiteReader.retrieveAll(
         cluster.graphiteConfig.graphite_login,
         cluster.graphiteConfig.graphite_cluster_metrics,
-        cluster.graphite + (("cluster", cluster.cluster_name)))
+        graphiteParamsMap
+      )
     }catch {
       case e:Throwable =>
         log.warning(e.getMessage)

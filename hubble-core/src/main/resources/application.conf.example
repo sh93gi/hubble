@@ -7,9 +7,11 @@ hubble {
               {
                 cluster_name = the actual cluster name that cassandra cluster defines itself by. These Clusters are the DTAP for certain group (ex. "CLUSTER_1_DEV")
                 graphana = the host name of graphana. format is "serverHostname:port"
-                graphite = { dictionary of template arguments for hubble.graphite.plot.url_template string
-                    key: value style definition of template arguments
-                }
+                graphite = [    a list of dictionaries. The first one resulting in a response with data will be used.
+                    {           dictionary of template arguments for hubble.graphite.plot.url_template string
+                        key=value  definition of template arguments
+                    }
+                ]
                 hosts = [
                   hosts list for connecting to Cassandra (e.g. "hostname1,hostname2")
                 ]

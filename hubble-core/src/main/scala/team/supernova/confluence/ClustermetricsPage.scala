@@ -16,8 +16,11 @@ object ClusterMetricsPage {
         {clusterInfo.cluster_name}
       </h1>
       {
-        GraphitePlotSection.present(clusterInfo.cluster.graphiteConfig.graphite_plot, clusterInfo.cluster.graphite)}
-        {SlowQuerySections.presentClusterSlows(clusterInfo, expandBlock = false)}
+        if (clusterInfo.cluster.graphite.isEmpty)
+          NodeSeq.Empty
+        else
+          GraphitePlotSection.present(clusterInfo.cluster.graphiteConfig.graphite_plot, clusterInfo.cluster.graphite.head)
+      } {SlowQuerySections.presentClusterSlows(clusterInfo, expandBlock = false)}
         {GraphiteMetricSection.singleMetricTable(clusterInfo.clusterMetrics, <h1>Cluster Metrics</h1>)}
         { GraphiteMetricSection.combinedMetricTable(
             clusterInfo.keyspaceMetrics,

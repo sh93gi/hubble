@@ -46,7 +46,7 @@ object HubbleApp extends App {
       pr.getString("cluster_name"),
       pr.getString("graphana"),
       graphiteConfig,
-      toMap(pr.getObject("graphite")),
+      pr.getObjectList("graphite").map(toMap).toList,
       pr.getStringList("hosts").asScala.toArray[String],
       pr.getString("ops_pword"),
       pr.getString("ops_uname"),

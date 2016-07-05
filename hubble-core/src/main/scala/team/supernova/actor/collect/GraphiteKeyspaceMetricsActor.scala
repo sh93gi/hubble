@@ -17,10 +17,11 @@ class GraphiteKeyspaceMetricsActor(requester: ActorRef)  extends Actor with Acto
     keyspaces.map(keyspace => keyspace -> keyspace)
       .toMap.mapValues(keyspace => {
       try {
+        val graphiteParamsMap = cluster.graphite.map(Map()+ (("keyspace", keyspace)) + (("cluster", cluster.cluster_name))++_)
         AuthorizedGraphiteReader.retrieveAll(
           cluster.graphiteConfig.graphite_login,
           cluster.graphiteConfig.graphite_keyspace_metrics,
-          cluster.graphite + (("keyspace", keyspace)) + (("cluster", cluster.cluster_name))
+          graphiteParamsMap
         )
       }catch {
         case e:Throwable =>

@@ -28,7 +28,7 @@ abstract class AuthorizedMetricRetrieverSpecBase
     it  ("should retrieve measurements") {
       val metric = clusterInstance.graphiteConfig.graphite_cluster_metrics.head
       val measure = new AuthorizedGraphiteReader(metric.url_template, graphiteUserName, graphitePassword)
-        .retrieve(clusterInstance.graphite)
+        .retrieve(clusterInstance.graphite.head)
       measure should not be None
     }
 
