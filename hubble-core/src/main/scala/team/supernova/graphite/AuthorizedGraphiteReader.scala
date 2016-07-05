@@ -9,18 +9,23 @@ import team.supernova._
 
 object AuthorizedGraphiteReader{
   def retrieveAll(graphiteLogin: GraphiteLogin, metrics:List[GraphiteMetricConfig], params:Map[String, String]):List[MetricResult]={
-    metrics.map(metric =>
-      (
-        MetricDefinition(metric.name, metric.func, metric.format),
-        new AuthorizedGraphiteReader(metric.url_template, graphiteLogin.graphite_uname, graphiteLogin.graphite_pword)
-        ))
-      .map { case (definition, reader) =>
-        reader.retrieve(params) match {
-          case (source, values) => definition.process(source, values)
-        }
-      }
+  metrics.map(metric=>
+    retrieve(
+      graphiteLogin,
+      metric.url_template,
+      params) match{
+      case (source, values) => MetricDefinition(metric).process(source, values, params)
+    }
+  )
+  }
+
+  def retrieve(graphiteLogin: GraphiteLogin, urlTemplate: String, params:Map[String, String]):
+    (MetricSource, List[List[Double]])={
+     new AuthorizedGraphiteReader(urlTemplate, graphiteLogin.graphite_uname, graphiteLogin.graphite_pword)
+      .retrieve(params)
   }
 }
+
 class AuthorizedGraphiteReader(url_template: String, graphiteUserName: String, graphitePassword: String) {
   val log = LoggerFactory.getLogger(classOf[AuthorizedGraphiteReader])
 

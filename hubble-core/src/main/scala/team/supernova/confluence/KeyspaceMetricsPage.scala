@@ -13,7 +13,7 @@ object KeyspaceMetricsPage {
       <p>
         { SlowQuerySections.presentKeyspaceSlows(clusterInfo, keyspace.keyspace_name, expandBlock = false)  }
         { GraphiteMetricSection.singleMetricTable(
-            clusterInfo.keyspaceMetrics.getOrElse(keyspace.keyspace_name, List()),
+            keyspace.metrics,
             <h1>Keyspace Metrics</h1>)}
       </p>
       <h1>Tables</h1>

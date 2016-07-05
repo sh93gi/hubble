@@ -2,26 +2,48 @@ package team.supernova.graphite
 
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
+import team.supernova.validation.Check
 
-class MetricDefinition(val name: String, aggregator: Iterable[Double]=>Double, formatter: Double=>String){
+class MetricDefinition(val name: String, aggregator: Iterable[Double]=>Double, formatter: Double=>String,
+                       checks: List[(Double, Map[String, String])=>Check]){
 
-  def process(metricSource: MetricSource, values: List[List[Double]]): MetricResult ={
+  def process(metricSource: MetricSource, values: List[List[Double]], templateArgs: Map[String, String]): MetricResult ={
     val metricVal =
       if (values.isEmpty)
         None
       else
         Some(aggregator(values.map(aggregator(_))))
-    MetricResult(name, metricVal, formatter, metricSource)
+    MetricResult(name, metricVal, formatter, metricSource,
+      metricVal match {
+        case Some(value) => checks.map(_(value, templateArgs + (("value", formatter(value)))))
+        case None => List()
+      })
   }
 }
 
 object MetricDefinition{
   val log = LoggerFactory.getLogger(classOf[MetricDefinition])
 
-  def apply(name: String, func: Option[String], format: Option[String]): MetricDefinition = {
-    new MetricDefinition(name, getAggregateFuncImplementation(func), getToStringFuncImplmentation(format))
+  def apply(config: GraphiteMetricConfig): MetricDefinition = {
+    new MetricDefinition(config.name, getAggregateFuncImplementation(config.func), getToStringFuncImplmentation(config.format),
+      config.checks.map(getCheckCreationImplementation) )
   }
 
+  def getCheckCreationImplementation(config: GraphiteMetricCheckConfig) : (Double, Map[String, String] )=> Check =
+    (value:Double, templateArgs : Map[String, String])=> {
+      val comparison = getComparisonFuncImplementation(config.check)
+      val details = new StringTemplate(config.details).fillWith(templateArgs)
+      Check(config.name, details, hasPassed = !comparison(value, config.threshold), config.severity)
+    }
+
+  def getComparisonFuncImplementation(funcDef:String): (Double, Double)=>Boolean = {
+    funcDef.toLowerCase match{
+      case "gt" => _ > _
+      case "lt" => _ < _
+      case "eq" => _ == _
+      case "neq" => _ != _
+    }
+  }
   def getAggregateFuncImplementation(funcDef:Option[String]):Iterable[Double]=>Double = {
     funcDef.map(_.toLowerCase) match{
       case Some("avg") => a=>a.sum/a.size

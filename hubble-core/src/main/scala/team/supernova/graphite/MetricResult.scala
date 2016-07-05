@@ -1,6 +1,8 @@
 package team.supernova.graphite
 
-case class MetricResult(name: String, value: Option[Double], formatter: Double=>String, source: MetricSource){
+import team.supernova.validation.Check
+
+case class MetricResult(name: String, value: Option[Double], formatter: Double=>String, source: MetricSource, checks: List[Check]){
 
   def formatted:Option[String] = value.map(formatter)
 }

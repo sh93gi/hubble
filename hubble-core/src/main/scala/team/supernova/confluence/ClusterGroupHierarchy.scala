@@ -12,11 +12,22 @@ class ClusterGroupHierarchy(project: String, page: Page, tokenPage: RemotePage){
   var tokenContent: String = ""
   var expectedTitles = ArrayBuffer[String](tokenPage.getTitle)
 
+  def replaceWithToken(current: RemotePage, title: String, content: String): RemotePage ={
+    Confluence.confluenceReplacePage(current, title, content, page, tokenPage) match {
+      case (clusterPageHash, resultPage) =>
+        tokenContent = tokenContent + "<br/>" + clusterPageHash
+        expectedTitles += title
+        resultPage
+    }
+  }
+
   def createWithToken(title: String, content: String, parent: RemotePage): RemotePage ={
-    val clusterPageHash = Confluence.confluenceCreatePage(project, title, content, page, parent, tokenPage)
-    tokenContent = tokenContent + "<br/>" + clusterPageHash
-    expectedTitles += title
-    page.read(project, title)
+    Confluence.confluenceCreatePage(project, title, content, page, parent, tokenPage) match {
+      case (clusterPageHash, resultPage) =>
+        tokenContent = tokenContent + "<br/>" + clusterPageHash
+        expectedTitles += title
+        resultPage
+    }
   }
 
   def createTokenless(title: String, content: String, parent: RemotePage):Unit = {
@@ -25,8 +36,9 @@ class ClusterGroupHierarchy(project: String, page: Page, tokenPage: RemotePage){
   }
 
   def updateToken(){
-    tokenPage.setContent(tokenContent)
-    page.update(tokenPage, false)
+    val newTokenPage = page.read(tokenPage.getId)
+    newTokenPage.setContent(tokenContent)
+    page.update(newTokenPage, false)
     log.info(s"TOKEN page updated!")
   }
 
@@ -94,8 +106,12 @@ object ClusterGroupHierarchy {
         for (keyspace <- clusterInfo.keyspaces)
           yield {
             val keyspaceContent = KeyspacePage.generateKeyspacePage(project, keyspace, clusterInfo)
-            val keyPageName = ConfluenceNaming.createName(clusterInfo, keyspace)
-            val keyspacePage = hierarchy.createWithToken(keyPageName, keyspaceContent, clusterParentPage)
+            val keyspacePageName = ConfluenceNaming.createName(clusterInfo, keyspace)
+            val keyspacePage = Confluence.getIfExists(project, ConfluenceNaming.createDeletedName(keyspacePageName), page) match{
+              case None=> hierarchy.createWithToken(keyspacePageName, keyspaceContent, clusterParentPage)
+              case Some(deleted) => hierarchy.replaceWithToken(deleted, keyspacePageName, keyspaceContent)
+            }
+
 
             // Create different page for metrics of keyspace, without notification
             val keyspaceMetricsContent = KeyspaceMetricsPage.generateKeyspaceMetricsPage(keyspace, clusterInfo)
@@ -121,14 +137,13 @@ object ClusterGroupHierarchy {
             page.remove(kPage.getId)
             log.info(s"DELETED page: ${kPage.getTitle}")
           } else {
-            val deletionSuffix = "[deleted]"
-            if (!deletePages && !kPage.getTitle.endsWith(deletionSuffix)){
+            if (!deletePages && !ConfluenceNaming.hasDeletedName(kPage.getTitle)){
               val kPageFull = page.read(kPage.getId)
               val parentPage = page.read(kPage.getParentId)
               // If the keyspace of the page is of a cluster we've actually verified this run
               if (allClusters.clusterInfoList.count(ConfluenceNaming.hasNameOf(_, parentPage)) > 0) {
                 // Then rename it
-                kPageFull.setTitle(kPage.getTitle + deletionSuffix)
+                kPageFull.setTitle(ConfluenceNaming.createDeletedName(kPage.getTitle))
                 log.info(s"RENAMING page: ${kPage.getTitle} to ${kPageFull.getTitle}")
                 page.store(kPageFull)
               }

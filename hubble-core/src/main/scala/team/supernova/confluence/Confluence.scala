@@ -91,40 +91,46 @@ object Confluence {
     }
   }
 
-  //update a page if the token is unknown or create a confluence page if the page does not exist
-  def confluenceCreatePage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, tokenPage: RemotePage, notify: Boolean=true): String = {
-
-    val contentMD5 = pageName + "_MD5:" + md5hash(content)
-
-    //if the contentMD5 exists in TOKEN no need to read and update confluence!
-
-      try {
-        log.info(s"Checking ${tokenPage.getTitle} for page: $pageName ")
-        if (!tokenPage.getContent.contains(contentMD5)) {
-          log.info(s"Updating: $pageName")
-          val existingPage: RemotePage = pageObject.read(project, pageName)
-          existingPage.setContent(content)
-          pageObject.update(existingPage, notify)
-          log.info(s"$pageName page updated, notify = $notify")
-        } else {
-          log.info(s"$pageName page not updated!")
-        }
-      }
-      catch {
+  def getIfExists(project: String, pageName: String, pageObject: Page): Option[RemotePage] ={
+    try{
+      Some(pageObject.read(project, pageName))
+      } catch{
         case e: Exception =>
-          log.info(s"Failed to update $pageName because of ${e.getMessage}. Will create it.")
-          val newPage: RemotePage = new RemotePage
-          newPage.setContent(content)
-          newPage.setTitle(pageName)
-          newPage.setParentId(parentPage.getId)
-          newPage.setSpace(parentPage.getSpace)
-          pageObject.store(newPage)
-          log.info(s"$pageName created!")
+          log.info(s"Failed to find $pageName because of ${e.getMessage} (${e.getClass}). Will assume it doesn't exist.")
+          None
       }
+  }
 
+  def confluenceReplacePage(existingPage: RemotePage, pageName: String, content: String, pageObject: Page, tokenPage: RemotePage, notify: Boolean=true): (String, RemotePage) = {
+    val contentMD5 = pageName + "_MD5:" + md5hash(content)
+    if (existingPage.getTitle!=pageName || !tokenPage.getContent.contains(contentMD5)){
+      log.info(s"Updating: $pageName")
+      existingPage.setTitle(pageName)
+      existingPage.setContent(content)
+      pageObject.update(existingPage, notify)
+      log.info(s"$pageName page updated, notify = $notify")
+      (contentMD5, existingPage)
+    } else{
+      log.info(s"$pageName page not updated (equal title and equal content hash)!")
+      (contentMD5, existingPage)
+    }
+  }
 
-    //return the token
-    contentMD5
+  def confluenceCreatePage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, tokenPage: RemotePage, notify: Boolean=true): (String, RemotePage) = {
+    getIfExists(project, pageName, pageObject) match{
+      case Some(existingPage) => confluenceReplacePage(existingPage, pageName, content, pageObject, tokenPage)
+      case None =>
+        log.info(s"Creating: $pageName")
+        val newPage: RemotePage = new RemotePage
+        newPage.setContent(content)
+        newPage.setTitle(pageName)
+        newPage.setParentId(parentPage.getId)
+        newPage.setSpace(parentPage.getSpace)
+        pageObject.store(newPage)
+        log.info(s"$pageName created!")
+        val contentMD5 = pageName + "_MD5:" + md5hash(content)
+        (contentMD5, newPage)
+    }
   }
 
   //https://confluence.atlassian.com/doc/expand-macro-223222352.html

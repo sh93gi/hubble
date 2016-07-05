@@ -69,7 +69,7 @@ object GraphiteMetricSection {
     </p>
   }
 
-  def combinedMetricTable(multimetrics  : Map[String, List[MetricResult]], header: NodeSeq, keyToUrl : Option[(String)=>String]= None ) : NodeSeq = {
+  def combinedMetricTable(multimetrics  : Map[String, List[MetricResult]], header: NodeSeq, columnTitle: String, keyToUrl : Option[(String)=>String]= None ) : NodeSeq = {
     //Are there any metrics at all?
     if (!multimetrics.values.flatten.map(_.value).exists(_.isDefined))
       return NodeSeq.Empty
@@ -78,7 +78,7 @@ object GraphiteMetricSection {
     header ++
     <p>
       <table>
-        <tbody><tr><th>Cluster</th>{metricTable.headerCells()}</tr>{multimetrics.toList.sortBy(_._1).map { case (clusterName, clusterMetrics) =>
+        <tbody><tr><th>{columnTitle}</th>{metricTable.headerCells()}</tr>{multimetrics.toList.sortBy(_._1).map { case (clusterName, clusterMetrics) =>
           val link = keyToUrl.map(_ (clusterName))
           val link_pre = if (link.isDefined) {
             scala.xml.Unparsed(s"""<a href="${scala.xml.Utility.escape(link.get)}">""")

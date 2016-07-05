@@ -18,7 +18,7 @@ class GraphiteClusterMetricsActor(requester: ActorRef)  extends Actor with Actor
       AuthorizedGraphiteReader.retrieveAll(
         cluster.graphiteConfig.graphite_login,
         cluster.graphiteConfig.graphite_cluster_metrics,
-        cluster.graphite)
+        cluster.graphite + (("cluster", cluster.cluster_name)))
     }catch {
       case e:Throwable =>
         log.warning(e.getMessage)

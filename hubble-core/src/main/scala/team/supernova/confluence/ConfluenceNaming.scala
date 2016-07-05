@@ -4,6 +4,16 @@ import team.supernova.confluence.soap.rpc.soap.beans.RemotePageSummary
 import team.supernova.{ClusterInfo, Keyspace}
 
 object ConfluenceNaming {
+  val deletionSuffix = "[deleted]"
+
+  def createDeletedName(title: String): String = {
+     title + deletionSuffix
+  }
+
+  def hasDeletedName(title: String) : Boolean = {
+    title.endsWith(deletionSuffix)
+  }
+
   def createLink(project: String, clusterName: String, keyspaceName: String) = {
     s"/display/$project/${createName(clusterName, keyspaceName).replace(" ", "+")}"
   }
