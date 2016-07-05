@@ -1,7 +1,7 @@
 package team.supernova.actor
 
 import akka.actor.{Actor, ActorLogging, Props}
-import team.supernova.confluence.ClusterGroupHierarchy
+import team.supernova.confluence.{ClusterOverallPage, ClusterGroupHierarchy}
 import team.supernova.confluence.soap.rpc.soap.actions.Token
 import team.supernova.{ClusterInfo, GroupClusters}
 
@@ -23,6 +23,9 @@ class ConfluencePage(space: String, token: Token) extends Actor with ActorLoggin
           val allClusters = GroupClusters(clusters.toSeq.sorted)
           ClusterGroupHierarchy.generateClusterGroupHierarchyPages(allClusters, space, groupName, token, deletePages = false)
         }
+
+        ClusterOverallPage.generateOverallClustersPage(clusterMap,token, space)
+
       }catch{
         case e:Exception => log.error(e, "Failed to create confluence pages")
       }finally{
