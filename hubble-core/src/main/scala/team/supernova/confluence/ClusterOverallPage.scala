@@ -32,38 +32,35 @@ object ClusterOverallPage {
             <tbody>
               <tr>
                 <th>Cluster Group Name</th> <th>Total Errors</th> <th>Total Warnings</th> <th>Extras</th> <th>Last Checked</th>
-              </tr>{scala.xml.Unparsed(clusterMap.foldLeft("") {
-              case (acc, (groupName, clusterInfoSet)) =>
-                val checksForEachCluster = clusterInfoSet.map { clusterInfo =>
-                  val errors = clusterInfo.checks.filter(check => check.severity == Severity.ERROR && !check.hasPassed)
-                  val warnings = clusterInfo.checks.filter(check => check.severity == Severity.WARNING && !check.hasPassed)
-                  (errors, warnings)
-                }
-                val totalChecks = checksForEachCluster.reduce((acc, next) => (acc._1 ++ next._1, acc._2 ++ next._2))
-                val str = totalChecks match {
-                  case (errors: List[Check], warnings: List[Check]) =>
-                    <tr>
-                      <td>
-                        <a href={s"/display/$projectPage/${groupName.replace(" ", "+")}"}>
-                          {groupName}
-                        </a>
-                      </td>
-                      <td>
-                        {errors.size}
-                      </td>
-                      <td>
-                        {warnings.size}
-                      </td>
-                      <td>
-                        {Confluence.confluenceCodeBlock("Error", errors.map(_.details).sorted.mkString("\n"), "none")}{Confluence.confluenceCodeBlock("Warnings", warnings.map(_.details).sorted.mkString("\n"), "none")}
-                      </td>
-                      <td>
-                        {Calendar.getInstance.getTime}
-                      </td>
-                    </tr>.toString()
-                }
-                acc + str
-            })}
+              </tr>{clusterMap.flatMap {
+              case (groupName, clusterInfoSet) =>
+                val failedChecks = clusterInfoSet.flatMap(_.checks).filterNot(_.hasPassed)
+                val errors = failedChecks.filter(_.severity==Severity.ERROR)
+                val warnings = failedChecks.filter(_.severity==Severity.WARNING)
+                  <tr>
+                    <td>
+                      <a href={s"/display/$projectPage/${groupName.replace(" ", "+")}"}>
+                        {groupName}
+                      </a>
+                    </td>
+                    <td>
+                      {errors.size}
+                    </td>
+                    <td>
+                      {warnings.size}
+                    </td>
+                    <td>
+                      {
+                        Confluence.confluenceCodeBlock("Error", errors.map(_.details).toList.sorted.mkString("\n"), "none")
+                      }{
+                        Confluence.confluenceCodeBlock("Warnings", warnings.map(_.details).toList.sorted.mkString("\n"), "none")
+                      }
+                    </td>
+                    <td>
+                      {Calendar.getInstance.getTime}
+                    </td>
+                  </tr>
+            }}
             </tbody>
           </table>
         </p>
@@ -73,20 +70,18 @@ object ClusterOverallPage {
             <tbody>
               <tr>
                 <th>Cluster Group Name</th> <th>Cluster Name</th><th>Total Keyspaces</th><th>Total Tables</th> <th>Total Errors</th> <th>Total Warnings</th> <th>Extras</th> <th>Last Checked</th>
-              </tr>{scala.xml.Unparsed(clusterMap.foldLeft("") {
-              case (acc, (groupName, clusterInfoSet)) =>
+              </tr>{clusterMap.flatMap {
+              case (groupName, clusterInfoSet) =>
                 val sortedClusterInfoSet = SortedSet[ClusterInfo]() ++ clusterInfoSet
-                var clusterDetails = ""
-                sortedClusterInfoSet.foreach { clusterInfo =>
+                sortedClusterInfoSet.flatMap { clusterInfo =>
                   val checks: List[Check] = clusterInfo.checks
                   val errors = checks.filter(check => check.severity == Severity.ERROR && !check.hasPassed)
                   val warnings = checks.filter(check => check.severity == Severity.WARNING && !check.hasPassed)
 
                   val keyspaces: SortedSet[Keyspace] = clusterInfo.keyspaces
-                  val numberOfTables = keyspaces.foldLeft(0)((acc, right) => acc + right.children.size)
+                  val numberOfTables = clusterInfo.keyspaces.map(_.children.size).sum
                   val numberOfKeyspaces = keyspaces.size
 
-                  clusterDetails +=
                     <tr>
                       <td>
                         <a href={s"/display/$projectPage/${groupName.replace(" ", "+")}"}>
@@ -111,15 +106,18 @@ object ClusterOverallPage {
                         {warnings.size}
                       </td>
                       <td>
-                        {Confluence.confluenceCodeBlock("Error", errors.map(_.details).sorted.mkString("\n"), "none")}{Confluence.confluenceCodeBlock("Warnings", warnings.map(_.details).sorted.mkString("\n"), "none")}
+                        {
+                        Confluence.confluenceCodeBlock("Error", errors.map(_.details).sorted.mkString("\n"), "none")
+                        }{
+                        Confluence.confluenceCodeBlock("Warnings", warnings.map(_.details).sorted.mkString("\n"), "none")
+                        }
                       </td>
                       <td>
                         {Calendar.getInstance.getTime}
                       </td>
-                    </tr>.toString()
+                    </tr>
                 }
-                acc + clusterDetails
-            })}
+            }}
             </tbody>
           </table>
         </p>
@@ -131,6 +129,7 @@ object ClusterOverallPage {
     } match {
       case Success(pageFound) => pageFound
       case Failure(f) =>
+        logger.warn(s"Failed to find $pageName page, creating a new one.")
         val newPage = new RemotePage()
         newPage.setTitle(pageName)
         newPage.setSpace(projectPage)
