@@ -1,13 +1,10 @@
 package team.supernova.reporting.confluence
 
+import org.slf4j.LoggerFactory
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
-import scala.xml.Elem
 
-/**
- * Created by Gary Stewart on 4-8-2015.
- *
- */
+import scala.xml.Elem
 
 object Overview {
 
@@ -23,6 +20,7 @@ case class KeyspaceInfo (keyspace       : String,
                          productOwner   : List[String],
                          app            : String,
                          desc          : String)
+  val logger = LoggerFactory.getLogger(classOf[KeyspaceInfo])
 
 
 
@@ -40,14 +38,18 @@ case class KeyspaceInfo (keyspace       : String,
       yield {
         val clusterPages =  token.getService.getChildren(token.getToken, gPage.getId)
         //cluster pages e.g. LLDS_1_DEV
-        for(cPage <- clusterPages)
+        for(cPage <- clusterPages
+          if cPage.getTitle!="Archive")
           yield {
             val ksPages =  token.getService.getChildren(token.getToken, cPage.getId)
             //keyspaces pages e.g. LLDS_1_DEV - ftl
             for(ksPage <- ksPages)
               yield {
                 //skip archive folder and the -TOKEN page
-                if (cPage.getTitle != "Archive" && ksPage.getTitle != gPage.getTitle+ "-TOKEN") {
+                if (
+                  !ksPage.getTitle.toLowerCase.endsWith("token") &&
+                  !ksPage.getTitle.toLowerCase.endsWith("metrics") &&
+                  ksPage.getTitle.split(" - ").length==2) {
                   val ksName = ksPage.getTitle.split(" - ")(1).toLowerCase
                   val clusName = ksPage.getTitle.split(" - ")(0)
                   val x = new KeyspaceCluster (ksName,clusName)
@@ -74,14 +76,14 @@ case class KeyspaceInfo (keyspace       : String,
       val test = scala.xml.XML.loadString("<?xml version=\"1.0\" encoding=\"utf-8\"?>" + "<body xmlns:ri=\"http://ri\">"+ rawUser + "</body>")
 
       retVal = (test \\ "user" ).map(a => token.getServiceLocator.getConfluenceserviceV2.getUserByKey(token.getToken, (a \ "@{http://ri}userkey").text).getFullname ).toList //.map(a => List(a))  //.foldLeft(List[Elem])((a,b) => a ++ b)
-      println ("retval: " + retVal)
+      logger.debug("retval: " + retVal)
     }
     catch {
       case e: Exception => {
-        println ("EXCEPTION - getUsersFromValue - " + e)
+        logger.error("EXCEPTION - getUsersFromValue - ", e)
       }
     }
-    println (name + " " + retVal)
+    logger.debug(name + " " + retVal)
     retVal
   }
 
@@ -123,9 +125,9 @@ case class KeyspaceInfo (keyspace       : String,
       desc = getTextFromTable( content, "Short Description of use-case")
     }
     else {
-      println(keyspaceName +" -> "+ linkedKeyspace)
+      logger.debug(keyspaceName +" -> "+ linkedKeyspace)
     }
-    var keyspaceInfo = new KeyspaceInfo(keyspaceName, "",linkedKeyspace,dcab, dcabApprover, devContacts, opsContacts, productOwner, applicationName, desc )
+    val keyspaceInfo = new KeyspaceInfo(keyspaceName, "", linkedKeyspace, dcab, dcabApprover, devContacts, opsContacts, productOwner, applicationName, desc)
     keyspaceInfo
 
   }
@@ -151,11 +153,11 @@ case class KeyspaceInfo (keyspace       : String,
 
     //find all keyspaces
     val keyspaceInfoList = getKeyspaces (token)
-    println (keyspaceInfoList.groupBy(_.keyspace).mapValues(_.map(_.clusterName)))
+    logger.debug(keyspaceInfoList.groupBy(_.keyspace).mapValues(_.map(_.clusterName)).toString())
     val keyspaceClusterList = keyspaceInfoList.groupBy(_.keyspace).mapValues(_.map(_.clusterName))
     val clusterKeyspaceList = keyspaceInfoList.groupBy(_.clusterName).mapValues(_.map(_.keyspace))
-    println (keyspaceClusterList)
-    println (clusterKeyspaceList)
+    logger.debug(keyspaceClusterList.toString())
+    logger.debug(clusterKeyspaceList.toString())
 
     getKeyspacesInfoFromManualPage(token, space)
     println("---- FINISHED ---")
