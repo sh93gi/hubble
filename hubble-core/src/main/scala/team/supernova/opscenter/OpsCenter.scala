@@ -44,9 +44,9 @@ object OpsCenter {
       (keyspace_tables._1, keyspace_tables._2.map(tableName=>
         OpsTableInfo(tableName,
           tryMetric(login, host, uname, pword, clusterName, node, keyspace_tables._1, tableName, "cf-total-disk-used")
-            .toOption.flatten.map(v => Math.round(v / 1048576)).getOrElse(-1),
+            .map(v => Math.round(v / 1048576)).getOrElse(-1),
           tryMetric(login, host, uname, pword, clusterName, node, keyspace_tables._1, tableName, "cf-live-sstables")
-            .toOption.flatten.getOrElse(-1D).toLong
+            .getOrElse(-1D).toLong
         )
       ))
     ).toList.map(k_v=>OpsKeyspaceInfo(k_v._1, k_v._2))
@@ -82,7 +82,7 @@ object OpsCenter {
                 node: String,
                 keyspaceName: String,
                 tableName: String,
-                metricName: String): Try[Option[Double]] = {
+                metricName: String): Option[Double] = {
     val url = s"http://$host/$clusterName/metrics/$node/$keyspaceName/$tableName/$metricName?step=120&start=${System.currentTimeMillis / 1000 - 300}&function=max"
     val metricattempt = Try(Http(url)
         .withHeaders(login)
@@ -92,8 +92,9 @@ object OpsCenter {
       .logFailure(e => log.error(s"Failed to receive $metricName data of $keyspaceName on $node in $clusterName, using $url, because of ${e.getMessage}"))
       .logSuccess(metric => log.info(s"Received $metricName raw data of $keyspaceName on $node in $clusterName. Value = $metric"))
       .flatMap(response => Try(parseMetric(response))
-        .logFailure(e => s"Failed to parse $metricName data of $keyspaceName on $node in $clusterName, because of ${e.getMessage}, metric data=$response"))
+      .logFailure(e => s"Failed to parse $metricName data of $keyspaceName on $node in $clusterName, because of ${e.getMessage}, metric data=$response"))
       .logSuccess(metric => log.info(s"Interpreted $metricName value of $keyspaceName on $node in $clusterName. Value = $metric"))
+      .toOption.flatten
   }
 
   implicit class LogTry[A](attempt: Try[A]) {
@@ -128,6 +129,7 @@ object OpsCenter {
         tryNodeNames(host, login, clusterName).map(res=>(login, res))
       })
       .logSuccess(res => log.debug(s"Found the following nodes in OpsCenter: ${res._2}"))
+      .logFailure(e => log.error(s"Failed to retrieve node names from OpsCenter: ${e.getMessage} ${e.getClass.getCanonicalName}"))
       .toOption
       .flatMap(login_nodes=>{
         val login = login_nodes._1
@@ -135,7 +137,8 @@ object OpsCenter {
         //per node
         val listNodes = listNodeIP.map(node_ip => {
           val nodeYaml = tryYaml(login, host, clusterName, node_ip)
-            .logFailure(e => log.error(s"Failed to load node configuration of $node_ip within $clusterName: ${e.getMessage} ${e.getClass.getCanonicalName}"))
+            .logSuccess(res => log.debug(s"Received and loaded node yaml configuration of $node_ip within $clusterName , containing the following keys: ${res.all.keys.mkString(", ")} "))
+            .logFailure(e => log.error(s"Failed to load node yaml configuration of $node_ip within $clusterName: ${e.getMessage} ${e.getClass.getCanonicalName}"))
             .toOption
           val keyInfo = getTableSize(login, host, uname, pword, clusterName, listKeyspaceInfo, node_ip)
           new OpsCenterNode(node_ip, nodeYaml, keyInfo)
