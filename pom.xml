@@ -9,7 +9,7 @@
     <properties>
         <scala.version>2.11.7</scala.version>
         <akkatestkit.version>2.4.1</akkatestkit.version>
-        <cassandra.version>2.1.10.2</cassandra.version>
+        <cassandra.version>2.1.10.1</cassandra.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -216,6 +216,7 @@
                 <groupId>com.datastax.cassandra</groupId>
                 <artifactId>cassandra-driver-core</artifactId>
                 <version>${cassandra.version}</version>
+                <classifier>shaded</classifier>
             </dependency>
         </dependencies>
     </dependencyManagement>
