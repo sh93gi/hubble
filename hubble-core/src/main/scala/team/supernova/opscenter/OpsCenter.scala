@@ -29,7 +29,18 @@ object OpsCenter {
         .withHeaders(login)
         .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
         .asString.body)
-    nodesAttempt.flatMap(response => Try((parse(response) \\ "node_ip").children.map(_.values.toString)))
+        .logFailure(e => log.error(s"Failed to retrieve nodenames content of $clusterName from $host, because of ${e.getMessage} (${e.getClass.getName})"))
+        .logSuccess(r => log.info(s"Successfully retrieved nodenames content of $clusterName from $host"))
+    nodesAttempt.flatMap(response => Try(
+      (parse(response) \\ "node_ip").children.map(_.values.toString))
+        .logFailure(e => log.error(s"Failed to parse the retrieved nodenames content of $clusterName from $host, because of ${e.getMessage} (${e.getClass.getName}), orig content=$response"))
+        .logSuccess(e => {
+          if (e.isEmpty)
+            log.error(s"Failed to find any nodes in the nodes description of $clusterName from $host. The response was: '$response'")
+          else
+            log.info(s"Successfully parsed the retrieved nodenames content of $clusterName from $host. Found ${e.size} nodes.")
+        })
+    )
   }
 
   def getTableSize(login: Login,
@@ -71,7 +82,15 @@ object OpsCenter {
         .withHeaders(login)
         .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
         .asString.body)
-    nodeconfAttempt.flatMap(response => Try(CassandraYaml.parseBody(response)))
+      .logFailure(e => log.error(s"Failed to retrieve nodeconf content of $clusterName from $host, because of ${e.getMessage} (${e.getClass.getName})"))
+      .logSuccess(r => log.info(s"Successfully retrieved nodeconf content of $clusterName from $host"))
+    nodeconfAttempt.flatMap(response =>
+      Try(CassandraYaml.parseBody(response))
+      .logFailure(e => log.error(s"Failed to parse the retrieved nodeconf content of $clusterName from $host, because of ${e.getMessage} (${e.getClass.getName}), orig content=$response"))
+      .logSuccess(r => {
+          log.info(s"Successfully parsed the retrieved nodeconf content of $clusterName from $host. Found ${r.all.size} key value pairs.")
+      })
+    )
   }
 
   def tryMetric(login: Login,
@@ -123,13 +142,13 @@ object OpsCenter {
                                  listKeyspaceInfo: Map[String, List[String]]
                                 ): Option[OpsCenterClusterInfo] = {
     tryLogin(host, uname, pword)
-      .logFailure(e => log.error(s"Failed to login on $host for $clusterName: ${e.getMessage} ${e.getClass.getCanonicalName}"))
-      .logSuccess(_ => log.info(s"Successfully logged in to opscenter for $clusterName"))
+      .logFailure(e => log.error(s"Failed to login on OpsCenter on $host for $clusterName: ${e.getMessage} ${e.getClass.getCanonicalName}"))
+      .logSuccess(_ => log.info(s"Successfully logged on OpsCenter on $host for $clusterName"))
       .flatMap(login => {
         tryNodeNames(host, login, clusterName).map(res=>(login, res))
       })
-      .logSuccess(res => log.debug(s"Found the following nodes in OpsCenter: ${res._2}"))
-      .logFailure(e => log.error(s"Failed to retrieve node names from OpsCenter: ${e.getMessage} ${e.getClass.getCanonicalName}"))
+      .logSuccess(res => log.debug(s"Successfully received node names from OpsCenter within $clusterName : ${res._2.mkString(", ")}"))
+      .logFailure(e => log.error(s"Failed to retrieve node names from OpsCenter within $clusterName : ${e.getMessage} ${e.getClass.getCanonicalName}"))
       .toOption
       .flatMap(login_nodes=>{
         val login = login_nodes._1
@@ -137,7 +156,7 @@ object OpsCenter {
         //per node
         val listNodes = listNodeIP.map(node_ip => {
           val nodeYaml = tryYaml(login, host, clusterName, node_ip)
-            .logSuccess(res => log.debug(s"Received and loaded node yaml configuration of $node_ip within $clusterName , containing the following keys: ${res.all.keys.mkString(", ")} "))
+            .logSuccess(res => log.debug(s"Successfully loaded node yaml configuration of $node_ip within $clusterName , containing the following keys: ${res.all.keys.mkString(", ")} "))
             .logFailure(e => log.error(s"Failed to load node yaml configuration of $node_ip within $clusterName: ${e.getMessage} ${e.getClass.getCanonicalName}"))
             .toOption
           val keyInfo = getTableSize(login, host, uname, pword, clusterName, listKeyspaceInfo, node_ip)
