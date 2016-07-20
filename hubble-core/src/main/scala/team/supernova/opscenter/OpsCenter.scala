@@ -70,7 +70,7 @@ object OpsCenter {
 
   def tryLogin(host: String, uname: String, pword: String): Try[Login] = {
     //login to OpsCenter and get session id
-    val loginAttempt = Try(Http(s"http://$host/login")
+    val loginAttempt = Try(Http(s"$host/login")
       .param("username", uname).param("password", pword)
       .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
       .asString.body)
@@ -78,7 +78,7 @@ object OpsCenter {
   }
 
   def tryYaml(login: Login, host: String, clusterName: String, node_ip: String): Try[CassandraYaml] = {
-    val nodeconfAttempt = Try(Http(s"http://$host/$clusterName/nodeconf/$node_ip")
+    val nodeconfAttempt = Try(Http(s"$host/$clusterName/nodeconf/$node_ip")
         .withHeaders(login)
         .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
         .asString.body)

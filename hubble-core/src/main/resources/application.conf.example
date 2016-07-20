@@ -18,7 +18,7 @@ hubble {
                 port = port used to connect to Cassandra (e.g. 9042)
                 pword = the password to connect to Cassandra
                 uname = the user to connect to Cassandra
-                opscenter = the host name of opscenter. format is "serverHostname:port"
+                opscenter = the host name of opscenter. format is "protocol://serverHostname:port", for example: "https://opscenter.intranet.nl"
                 ops_pword = password for the opsCenter Server
                 ops_uname = username for the opsCenter Server
                 sequence = Order by which the clusters within a group should be processed and shown in confluence
