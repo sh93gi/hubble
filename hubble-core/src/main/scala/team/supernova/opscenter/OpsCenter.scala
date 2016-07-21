@@ -25,7 +25,7 @@ object OpsCenter {
     import org.json4s._
     import org.json4s.jackson.JsonMethods._
 
-    val nodesAttempt = Try(Http(s"http://$host/$clusterName/nodes")
+    val nodesAttempt = Try(Http(s"$host/$clusterName/nodes")
         .withHeaders(login)
         .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
         .asString.body)
@@ -102,7 +102,7 @@ object OpsCenter {
                 keyspaceName: String,
                 tableName: String,
                 metricName: String): Option[Double] = {
-    val url = s"http://$host/$clusterName/metrics/$node/$keyspaceName/$tableName/$metricName?step=120&start=${System.currentTimeMillis / 1000 - 300}&function=max"
+    val url = s"$host/$clusterName/metrics/$node/$keyspaceName/$tableName/$metricName?step=120&start=${System.currentTimeMillis / 1000 - 300}&function=max"
     val metricattempt = Try(Http(url)
         .withHeaders(login)
         .timeout(connTimeoutMs = connTimeout, readTimeoutMs = readTimeout)
