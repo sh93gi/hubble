@@ -84,13 +84,15 @@ object ClusterGroupHierarchy {
 
     val hierarchy = new ClusterGroupHierarchy(project, page, tokenPage)
     //Always update the Cluster page
+    log.info(s"Updating the clustergoup page $mainPageName within $project")
     clusterGroupPage.setContent(s"<body>${ClusterGroupPage.generateClusterGroupPage(allClusters, project)}</body>")
     page.store(clusterGroupPage)
 
 
     //Per ClusterInfo - create page
     for (clusterInfo <- allClusters.clusterInfoList)
-      yield {
+      {
+        log.info(s"Creating pages for ${clusterInfo.cluster_name} within $project")
         //create the specific summary cluster page
         val clusterPageName = ConfluenceNaming.createName(clusterInfo)
         val clusterContent = ClusterSummaryPage.generateClusterSummaryPage(project, clusterInfo)
@@ -104,7 +106,8 @@ object ClusterGroupHierarchy {
 
         // Per keyspace create pages
         for (keyspace <- clusterInfo.keyspaces)
-          yield {
+          {
+            log.info(s"Creating pages for ${keyspace.keyspace_name} within $project")
             val keyspaceContent = KeyspacePage.generateKeyspacePage(project, keyspace, clusterInfo)
             val keyspacePageName = ConfluenceNaming.createName(clusterInfo, keyspace)
             val keyspacePage = Confluence.getIfExists(project, ConfluenceNaming.createDeletedName(keyspacePageName), page) match{

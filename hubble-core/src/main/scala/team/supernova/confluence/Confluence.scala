@@ -51,7 +51,7 @@ object Confluence {
 
   def confluenceReadOrCreate(project: String, pageName: String, pageObject: Page, parentPage: RemotePage) : RemotePage = {
     try {
-      log.info(s"Reading: $pageName")
+      log.info(s"Reading or creating: $pageName")
       pageObject.read(project, pageName)
     }
     catch {
@@ -70,7 +70,7 @@ object Confluence {
 
   def confluenceCreateTokenLessPage(project: String, pageName: String, content: String, pageObject: Page, parentPage: RemotePage, notify: Boolean=true) : RemotePage = {
     try {
-      log.info(s"Updating: $pageName")
+      log.info(s"Updating without token check: $pageName")
       val existingPage: RemotePage = pageObject.read(project, pageName)
       existingPage.setContent(content)
       pageObject.update(existingPage, notify)
@@ -93,6 +93,7 @@ object Confluence {
 
   def getIfExists(project: String, pageName: String, pageObject: Page): Option[RemotePage] ={
     try{
+      log.info(s"Getting if exists: $pageName")
       Some(pageObject.read(project, pageName))
       } catch{
         case e: Exception =>
@@ -104,7 +105,7 @@ object Confluence {
   def confluenceReplacePage(existingPage: RemotePage, pageName: String, content: String, pageObject: Page, tokenPage: RemotePage, notify: Boolean=true): (String, RemotePage) = {
     val contentMD5 = pageName + "_MD5:" + md5hash(content)
     if (existingPage.getTitle!=pageName || !tokenPage.getContent.contains(contentMD5)){
-      log.info(s"Updating: $pageName")
+      log.info(s"Updating after token page check: $pageName")
       existingPage.setTitle(pageName)
       existingPage.setContent(content)
       pageObject.update(existingPage, notify)
@@ -120,7 +121,7 @@ object Confluence {
     getIfExists(project, pageName, pageObject) match{
       case Some(existingPage) => confluenceReplacePage(existingPage, pageName, content, pageObject, tokenPage)
       case None =>
-        log.info(s"Creating: $pageName")
+        log.info(s"Creating as not existing yet: $pageName")
         val newPage: RemotePage = new RemotePage
         newPage.setContent(content)
         newPage.setTitle(pageName)
