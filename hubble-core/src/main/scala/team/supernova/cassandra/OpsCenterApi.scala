@@ -1,8 +1,8 @@
 package team.supernova.cassandra
 
 import com.datastax.driver.core.Metadata
-import team.supernova.Keyspace
 import team.supernova.opscenter.{OpsCenter, OpsCenterClusterInfo}
+import team.supernova.results.Keyspace
 
 import scala.collection.JavaConversions._
 import scala.collection.SortedSet

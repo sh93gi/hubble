@@ -1,7 +1,7 @@
 package team.supernova.confluence
 
+import team.supernova.results.{ClusterInfo, Keyspace, Table}
 import team.supernova.validation.Severity
-import team.supernova.{ClusterInfo, Keyspace, Table}
 
 object KeyspacePage {
 
@@ -16,6 +16,7 @@ object KeyspacePage {
     <body>{Confluence.CONFLUENCE_HEADER("This section summarises all the keyspace information.")}<hr/>
       <h1>Keyspace: {keyspace.keyspace_name}</h1>
       <p><a href={ConfluenceNaming.createMetricsLink(project, clusterInfo, keyspace)}>Detailed keyspace metrics</a>
+        { MaturitySection.present("Maturity level", keyspace.maturityLevelChecks)}
       { Confluence.confluenceCodeBlock("Errors", keyspaceErrors ,"none")}
         { Confluence.confluenceCodeBlock("Warnings", keyspaceWarnings ,"none")}
       </p>

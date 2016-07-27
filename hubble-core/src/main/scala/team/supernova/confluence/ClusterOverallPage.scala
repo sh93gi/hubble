@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
 import team.supernova.validation.{Check, Severity}
-import team.supernova.{ClusterInfo, Keyspace}
+import team.supernova.results.{ClusterInfo, Keyspace}
 
 import scala.collection.SortedSet
 import scala.util.{Failure, Success, Try}

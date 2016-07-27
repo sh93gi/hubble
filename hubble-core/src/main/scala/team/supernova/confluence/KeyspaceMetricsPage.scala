@@ -1,6 +1,6 @@
 package team.supernova.confluence
 
-import team.supernova.{ClusterInfo, Keyspace, Table}
+import team.supernova.results.{ClusterInfo, Keyspace, Table}
 
 import scala.xml.NodeSeq
 

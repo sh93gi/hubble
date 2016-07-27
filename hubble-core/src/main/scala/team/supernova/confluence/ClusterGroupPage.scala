@@ -2,7 +2,7 @@ package team.supernova.confluence
 
 import java.util.Calendar
 
-import team.supernova.GroupClusters
+import team.supernova.results.GroupClusters
 import team.supernova.validation.Severity
 
 object ClusterGroupPage {

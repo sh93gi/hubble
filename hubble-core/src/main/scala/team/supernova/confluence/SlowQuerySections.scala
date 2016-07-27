@@ -1,7 +1,7 @@
 package team.supernova.confluence
 
-import team.supernova.ClusterInfo
 import team.supernova.cassandra.{ClusterSlowQueries, SlowQuery}
+import team.supernova.results.ClusterInfo
 
 import scala.xml.NodeSeq
 

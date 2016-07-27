@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import team.supernova._
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.{RemotePage, RemotePageSummary}
+import team.supernova.results.GroupClusters
 
 import scala.collection.mutable.ArrayBuffer
 

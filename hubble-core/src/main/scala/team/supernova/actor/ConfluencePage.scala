@@ -1,9 +1,9 @@
 package team.supernova.actor
 
 import akka.actor.{Actor, ActorLogging, Props}
-import team.supernova.confluence.soap.rpc.soap.actions.Token
 import team.supernova.confluence.{ClusterGroupHierarchy, ClusterOverallPage}
-import team.supernova.{ClusterInfo, GroupClusters}
+import team.supernova.confluence.soap.rpc.soap.actions.Token
+import team.supernova.results.{ClusterInfo, GroupClusters}
 
 object ConfluencePage {
 
