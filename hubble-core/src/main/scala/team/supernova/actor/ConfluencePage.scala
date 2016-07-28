@@ -1,8 +1,8 @@
 package team.supernova.actor
 
 import akka.actor.{Actor, ActorLogging, Props}
-import team.supernova.confluence.{ClusterGroupHierarchy, ClusterOverallPage}
 import team.supernova.confluence.soap.rpc.soap.actions.Token
+import team.supernova.confluence.{ClusterGroupHierarchy, ClusterOverallPage}
 import team.supernova.results.{ClusterInfo, GroupClusters}
 
 object ConfluencePage {
@@ -21,7 +21,7 @@ class ConfluencePage(space: String, token: Token) extends Actor with ActorLoggin
         log.info("Start generating confluence pages")
         // TODO create separate actor instead of looping over groups
         val clusterMap = clusterInfoSet.groupBy(f => f.group)
-        clusterMap.foreach { case (groupName, clusters) =>
+        clusterMap.par.foreach { case (groupName, clusters) =>
           try {
             val allClusters = GroupClusters(clusters.toSeq.sorted)
             ClusterGroupHierarchy.generateClusterGroupHierarchyPages(allClusters, space, groupName, token, deletePages = false)

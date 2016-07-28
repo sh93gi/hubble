@@ -51,7 +51,7 @@ object OpsCenter {
                    listKeyspaceInfo: Map[String, List[String]],
                    node: String
                   ): List[OpsKeyspaceInfo] = {
-    listKeyspaceInfo.map(keyspace_tables=>
+    listKeyspaceInfo.toList.par.map(keyspace_tables=>
       (keyspace_tables._1, keyspace_tables._2.map(tableName=>
         OpsTableInfo(tableName,
           tryMetric(login, host, uname, pword, clusterName, node, keyspace_tables._1, tableName, "cf-total-disk-used")
