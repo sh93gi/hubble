@@ -42,7 +42,7 @@ abstract class GraphiteSpecBase
 
   describe("Graphite graph retriever"){
     it  ("should generate url with no remaining template strings") {
-      val url = StringTemplate().fillWith(clusterInstance.graphite)
+      val url = StringTemplate().fillWith(clusterInstance.graphite.head)
       url should startWith ("http")
       url should not contain "${"
     }
@@ -63,7 +63,7 @@ abstract class GraphiteSpecBase
 
     it  ("should create img with data (behind http authorization)") {
       // using heuristic of reasonably sized png (4KB returned for 'no data', 32KB for 'with data')
-      val url = StringTemplate().fillWith(clusterInstance.graphite)
+      val url = StringTemplate().fillWith(clusterInstance.graphite.head)
       import javax.imageio.ImageIO
       withClue(url){
         using(authorizedInputStream(url)) { isr => {

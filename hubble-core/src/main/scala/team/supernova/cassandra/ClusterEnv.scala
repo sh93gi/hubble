@@ -6,7 +6,7 @@ import team.supernova.users.UserNameValidator
 case class ClusterEnv( cluster_name: String,
                        graphana: String,
                        graphiteConfig: GraphiteConfig,
-                       graphite: Map[String, String],
+                       graphite: List[Map[String, String]],
                        hosts: Array[String],
                        ops_pword: String,
                        ops_uname: String,

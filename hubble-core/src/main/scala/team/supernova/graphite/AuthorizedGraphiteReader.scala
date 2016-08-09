@@ -7,16 +7,28 @@ import java.util.Base64
 import org.slf4j.LoggerFactory
 import team.supernova._
 
+import scala.util.{Failure, Success, Try}
+
 object AuthorizedGraphiteReader{
-  def retrieveAll(graphiteLogin: GraphiteLogin, metrics:List[GraphiteMetricConfig], params:Map[String, String]):List[MetricResult]={
-  metrics.map(metric=>
-    retrieve(
-      graphiteLogin,
-      metric.url_template,
-      params) match{
-      case (source, values) => MetricDefinition(metric).process(source, values, params)
+  def retrieveAll(graphiteLogin: GraphiteLogin, metrics:List[GraphiteMetricConfig], paramList:List[Map[String, String]]):List[MetricResult]={
+    if (paramList.isEmpty)
+      return List()
+    metrics.map(metric=>{
+      val paramResults = paramList.map{ case (params)=>
+        retrieve(
+          graphiteLogin,
+          metric.url_template,
+          params) match{
+          case (source, values) =>
+            MetricDefinition(metric).process(source, values, params)
+        }
+      }
+      paramResults.find(_.value.isDefined) match{
+        case None=>paramResults.head
+        case Some(definedMetric)=>definedMetric
+      }
     }
-  )
+    )
   }
 
   def retrieve(graphiteLogin: GraphiteLogin, urlTemplate: String, params:Map[String, String]):
@@ -29,25 +41,31 @@ object AuthorizedGraphiteReader{
 class AuthorizedGraphiteReader(url_template: String, graphiteUserName: String, graphitePassword: String) {
   val log = LoggerFactory.getLogger(classOf[AuthorizedGraphiteReader])
 
-  def authorizedInputStream(url: String ): InputStream ={
-    val name = graphiteUserName
-    val password = graphitePassword
-    val authString = name + ":" + password
-    val authEncBytes = Base64.getEncoder.encode(authString.getBytes())
-    val authStringEnc = new String(authEncBytes)
+  def authorizedInputStream(url: String ): Try[InputStream] ={
+    Try {
+      val name = graphiteUserName
+      val password = graphitePassword
+      val authString = name + ":" + password
+      val authEncBytes = Base64.getEncoder.encode(authString.getBytes())
+      val authStringEnc = new String(authEncBytes)
 
-    val url_ref = new URL(url)
-    val urlConnection = url_ref.openConnection()
-    urlConnection.setRequestProperty("Authorization", "Basic " + authStringEnc)
-    val is = urlConnection.getInputStream
-    is
+      val url_ref = new URL(url)
+      val urlConnection = url_ref.openConnection()
+      urlConnection.setRequestProperty("Authorization", "Basic " + authStringEnc)
+      val is = urlConnection.getInputStream
+      is
+    }
   }
 
   def retrieve(templateArgs: Map[String, String]): (MetricSource, List[List[Double]]) = {
     val url = new StringTemplate(url_template+"&rawData=true").fillWith(templateArgs)
-    val csv = using(authorizedInputStream(url)) { isr => {
-      scala.io.Source.fromInputStream(isr).getLines().toList
-    }
+    val csv = authorizedInputStream(url) match{
+      case Success(is) => using(is) { isr => {
+          scala.io.Source.fromInputStream(isr).getLines().toList
+        }}
+      case Failure(exc) =>
+        log.error(s"Failed to open inputstream to $url because of ${exc.getClass.getName}(${exc.getMessage})")
+        List()
     }
     log.info(s"Retrieved ${csv.size} metric series from $url")
     val values = csv.map(line=>line.split('|').last
