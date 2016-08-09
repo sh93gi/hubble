@@ -1,4 +1,4 @@
-package team.supernova
+package team.supernova.results
 
 import com.datastax.driver.core._
 import org.slf4j.LoggerFactory
@@ -50,15 +50,19 @@ case class Column(columnMetadata: ColumnMetadata, keyType: String) extends Check
   } else {
     ""
   }
-  def is_custom_index(): Boolean ={
+  def isCustomIndex(): Boolean ={
     val index = columnMetadata.getIndex
     index != null &&
       (index.getIndexClassName== null || !index.getIndexClassName.startsWith("com.datastax.bdp.search.solr."))
   }
 
+  private val checkSecondaryColumn = Check("Secondary Index exists",
+    s"Column has secondary index: $table_name.$column_name has index $index_name!",
+    !isCustomIndex(),
+    Severity.WARNING)
   val myChecks: List[Check] = {
     List(
-      Check("Secondary Index exists", s"Column has secondary index: $table_name.$column_name has index $index_name!", !is_custom_index(), Severity.WARNING),
+      checkSecondaryColumn,
       Check("ColumnName begin letter", s"Column name is not beginning with a letter: $table_name.$column_name", StringValidation.startsWithLetter(column_name), Severity.WARNING),
       Check("ColumnName length check long", s"Column name is too long: $table_name.$column_name", StringValidation.isNotTooLong(column_name), Severity.WARNING),
       Check("ColumnName length check short", s"Column name is a bit long: $table_name.$column_name", StringValidation.isNotABitLong(column_name), Severity.INFO),
@@ -135,43 +139,94 @@ case class Keyspace(keyspaceMetaData: KeyspaceMetadata,
   val keyspace_name = keyspaceMetaData.getName
   // TODO fix so that it is the entire schema
   val schemaScript = keyspaceMetaData.asCQLQuery()  //only contains the keyspace
-  val tables: List[Table] = keyspaceMetaData.getTables.foldLeft(List[Table]()) { (a, t) => a ++ List(Table(t)) }.sorted
+  val tables: List[Table] = keyspaceMetaData.getTables.map(Table(_)).toList.sorted
   // TODO make more elegant!
-  val dataCenter: SortedSet[String] = keyspaceMetaData.getReplication.filterNot(a => a._1.equals("class")).filterNot(b => b._1.equals("replication_factor")).keys.to
+  val dataCenter: SortedSet[String] = keyspaceMetaData.getReplication.
+    keys.
+    filterNot{_.equals("class")}.
+    filterNot{_.equals("replication_factor")}.
+    to
 
   //for each table check if link (pks) exists in another table
-  val findPossibleLinks: List[Link] = tables.foldLeft(List(): List[Link]) { (acc, t) =>
-    acc ++ tables.filter(a => a.table_name != t.table_name).
-      foldLeft(List(): List[Link]) { (a1, t1) =>
+  val findPossibleLinks: List[Link] = tables.flatMap( t =>{
+    tables.filterNot(_.table_name == t.table_name).flatMap(t1=>{
       val a = t1.columns.map(_.column_name).toSet
       val checkLink = a ++ t.pkColumns.map(_.column_name) == a //if we add the list of pk to a set and the set remains the same then we have a potential link!
-      //val s = s" Link ${t1.table_name} to ${t.table_name} on (${t.pkColumns.foldLeft(""){(a, col) => a + (if (!a.isEmpty ) ", " else "") + col.column_name }}) $checkLink"
       if (checkLink) {
-        val l = new Link(t1, t, t.pkColumns.foldLeft("") { (a, col) => a + (if (!a.isEmpty) ", " else "") + col.column_name })
-        a1 ++ List(l)
+        val l = new Link(t1, t, t.pkColumns.map(_.column_name).mkString(", "))
+        List(l)
       }
-      else
-        a1
-    }
-  }
+      else{
+        List()
+      }
+    })})
 
   val ignoreKeyspaces: Set[String] = Set("system_auth", "system_traces", "system", "system_admin", "dse_system", "dse_security", "dse_perf", "solr_admin")
   val dcNames = dataCenter.foldLeft("") { (a, w) => a + " '" + w + "'" }
 
-  private val keyspaceUserChecks = if(users.isDefined && userNameValidator.isDefined) userNameValidator.get.keyspaceUserChecks(users.get, keyspace_name) else List()
-  private val keyspaceMetricChecks = metrics.flatMap(_.checks)
+  private val checkKeyspaceUsers = if(users.isDefined && userNameValidator.isDefined)
+      userNameValidator.get.keyspaceUserChecks(users.get, keyspace_name)
+    else
+      List()
+  private val checkKeyspaceMetrics = metrics.flatMap(_.checks)
+  private val checkCassandraErrors = Check("CassandraErrors table check",
+    s"Keyspace contains CassandraErrors table: $keyspace_name. This is not mandatory anymore.",
+    ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("cassandraerrors")) == 1,
+    Severity.ERROR)
+  private val checkKeyspaceMetricsAvailable = Check("Graphite metrics check",
+    s"Keyspace hasn't got >=2 graphite metrics (like disk usage and response time): $keyspace_name",
+    metrics.count(_.value.isDefined) >= 2,  // at least 2 metrics (disk usage and response time / request count
+    Severity.WARNING)
+  private val checkUserConvention = {
+    val failedUsers = checkKeyspaceUsers.find(!_.hasPassed)
+    Check("All user checks passed",
+      s"Keyspace fails at least one user check: $keyspace_name --> ${failedUsers.map(_.details).getOrElse("")}",
+      failedUsers.isEmpty,
+      Severity.WARNING)
+  }
+  private val checkSecondaryColumn = {
+    val secondaryIndexColumn = tables.flatMap(_.columns).find(_.isCustomIndex())
+    Check("No secondary columns anywhere",
+      s"Keyspace contains at least one table with secondary columns: $keyspace_name${secondaryIndexColumn.map(
+        c=>"."+c.table_name+"."+c.column_name).getOrElse("")}",
+      secondaryIndexColumn.isEmpty, Severity.WARNING)
+  }
+  private val checkModelMutation =
+    Check("ModelMutation table check",
+      s"Keyspace has no ModelMutation table: $keyspace_name. Are you using Nolio for setting your cassandra data model?",
+      ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("modelmutation")) != 0,
+      Severity.INFO)
 
   val myChecks: List[Check] = List(
     // TODO check DC names are valid
     Check("Keyspace is unused check", s"No tables in keyspace: $keyspace_name", tables.nonEmpty, Severity.WARNING),
     // TODO when CassandraErrors is completely removed from the supernova driver when this message may change again
-    Check("CassandraErrors table check", s"Keyspace contains CassandraErrors table: $keyspace_name. This is not mandatory anymore.", ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("cassandraerrors")) == 1, Severity.INFO),
-    Check("ModelMutation table check", s"Keyspace has no ModelMutation table: $keyspace_name. Are you using Nolio for setting your cassandra data model?", ignoreKeyspaces.contains(keyspace_name) || tables.count(t => t.table_name.equals("modelmutation")) != 0, Severity.INFO),
+    checkCassandraErrors,
+    checkKeyspaceMetricsAvailable,
+    checkModelMutation,
     Check("Data Center names check", s"Incorrect DC names for keyspace $keyspace_name: used: ${dataCenter.mkString("'","', '","'")}, of which invalid: ${dataCenter.--(validDCnames).mkString("'","', '","'")}, all allowed: ${validDCnames.mkString("'","', '","'")}", validDCnames ++ dataCenter == validDCnames, Severity.ERROR),
     Check("KeyspaceName length check", s"Keyspace name is too long: $keyspace_name", StringValidation.isNotTooLong(keyspace_name), Severity.WARNING),
     Check("KeyspaceName length warning", s"Keyspace name is a bit long: $keyspace_name", StringValidation.isNotABitLong(keyspace_name), Severity.INFO),
     Check("KeyspaceName check", s"Keyspace name is not alphanumeric lowercase: $keyspace_name", StringValidation.isAlphaNumericLowercase(keyspace_name), Severity.WARNING)
-  ) ++ keyspaceUserChecks ++ keyspaceMetricChecks
+  ) ++ checkKeyspaceUsers ++ checkKeyspaceMetrics
+
+
+  implicit def tupleToMaturity(tuple:(Double, Check)): MaturityAspect = {
+    tuple match { case (weight, check)=>MaturityAspect(weight, check)}
+  }
+
+  val maturityLevelChecks: Map[Int, List[MaturityAspect]] = Map(
+    1->List(
+      (0.05, checkCassandraErrors),
+      (0.40, checkKeyspaceMetricsAvailable),
+      (0.20, checkSecondaryColumn)
+    ),
+    2->List(
+      (0.40, checkUserConvention),
+      (0.20, checkModelMutation)
+    )
+  )
+
   val children = tables
 }
 

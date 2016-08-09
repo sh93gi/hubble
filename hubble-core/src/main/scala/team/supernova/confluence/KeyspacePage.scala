@@ -1,7 +1,7 @@
 package team.supernova.confluence
 
+import team.supernova.results.{ClusterInfo, Keyspace, Table}
 import team.supernova.validation.Severity
-import team.supernova.{ClusterInfo, Keyspace, Table}
 
 object KeyspacePage {
 
@@ -15,11 +15,12 @@ object KeyspacePage {
     //need <body> tag otherwise ArrayBuilder is shown on confluence
     <body>{Confluence.CONFLUENCE_HEADER("This section summarises all the keyspace information.")}<hr/>
       <h1>Keyspace: {keyspace.keyspace_name}</h1>
-      <p><a href={ConfluenceNaming.createMetricsLink(project, clusterInfo, keyspace)}>Detailed keyspace metrics</a>
-      { Confluence.confluenceCodeBlock("Errors", keyspaceErrors ,"none")}
+      <p><a href={ConfluenceNaming.createMetricsLink(project, clusterInfo, keyspace)}>Detailed keyspace metrics</a></p>
+        { MaturitySection.present("Maturity level", keyspace.maturityLevelChecks)}
+       <p><h2>Checks</h2>
+        { Confluence.confluenceCodeBlock("Errors", keyspaceErrors ,"none")}
         { Confluence.confluenceCodeBlock("Warnings", keyspaceWarnings ,"none")}
-      </p>
-      <p>{ Confluence.confluenceCodeBlock("Schema",keyspace.schemaScript,"none")}</p>
+        { Confluence.confluenceCodeBlock("Schema",keyspace.schemaScript,"none")}</p>
       <h1>Tables</h1>
       <p>
         <table>

@@ -1,5 +1,7 @@
 package team.supernova
 
+import team.supernova.results.{ClusterInfo, Column}
+
 object PrettyPrint {
 
   def prettyPrintColumn(c : Column): String = {

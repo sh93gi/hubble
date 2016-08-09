@@ -1,7 +1,7 @@
 package team.supernova.confluence
 
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePageSummary
-import team.supernova.{ClusterInfo, Keyspace}
+import team.supernova.results.{ClusterInfo, Keyspace}
 
 object ConfluenceNaming {
   val deletionSuffix = "[deleted]"

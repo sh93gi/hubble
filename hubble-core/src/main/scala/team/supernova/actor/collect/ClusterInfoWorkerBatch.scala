@@ -1,8 +1,8 @@
 package team.supernova.actor.collect
 
 import akka.actor.{ActorRef, Props}
-import team.supernova.ClusterInfo
 import team.supernova.cassandra.ClusterEnv
+import team.supernova.results.ClusterInfo
 
 import scala.collection.mutable
 

@@ -51,7 +51,7 @@ object OpsCenter {
                    listKeyspaceInfo: Map[String, List[String]],
                    node: String
                   ): List[OpsKeyspaceInfo] = {
-    listKeyspaceInfo.map(keyspace_tables=>
+    listKeyspaceInfo.toList.par.map(keyspace_tables=>
       (keyspace_tables._1, keyspace_tables._2.map(tableName=>
         OpsTableInfo(tableName,
           tryMetric(login, host, uname, pword, clusterName, node, keyspace_tables._1, tableName, "cf-total-disk-used")
@@ -150,20 +150,18 @@ object OpsCenter {
       .logSuccess(res => log.debug(s"Successfully received node names from OpsCenter within $clusterName : ${res._2.mkString(", ")}"))
       .logFailure(e => log.error(s"Failed to retrieve node names from OpsCenter within $clusterName : ${e.getMessage} ${e.getClass.getCanonicalName}"))
       .toOption
-      .flatMap(login_nodes=>{
-        val login = login_nodes._1
-        val listNodeIP = login_nodes._2
+      .flatMap {case (login, listNodeIP) =>{
         //per node
-        val listNodes = listNodeIP.map(node_ip => {
+        val listNodes = listNodeIP.par.map(node_ip => {
           val nodeYaml = tryYaml(login, host, clusterName, node_ip)
             .logSuccess(res => log.debug(s"Successfully loaded node yaml configuration of $node_ip within $clusterName , containing the following keys: ${res.all.keys.mkString(", ")} "))
             .logFailure(e => log.error(s"Failed to load node yaml configuration of $node_ip within $clusterName: ${e.getMessage} ${e.getClass.getCanonicalName}"))
             .toOption
           val keyInfo = getTableSize(login, host, uname, pword, clusterName, listKeyspaceInfo, node_ip)
           new OpsCenterNode(node_ip, nodeYaml, keyInfo)
-        })
+        }).toList
         Some(new OpsCenterClusterInfo(login, clusterName, listNodes))
-      })
+      }}
   }
 
 

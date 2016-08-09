@@ -1,21 +1,22 @@
 package team.supernova.confluence
 
 import org.slf4j.LoggerFactory
-import team.supernova._
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.{RemotePage, RemotePageSummary}
+import team.supernova.results.GroupClusters
 
+import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.ArrayBuffer
 
 class ClusterGroupHierarchy(project: String, page: Page, tokenPage: RemotePage){
   val log = LoggerFactory.getLogger(classOf[ClusterGroupHierarchy])
-  var tokenContent: String = ""
   var expectedTitles = ArrayBuffer[String](tokenPage.getTitle)
+  val tokens = new TrieMap[String, String]()
 
   def replaceWithToken(current: RemotePage, title: String, content: String): RemotePage ={
     Confluence.confluenceReplacePage(current, title, content, page, tokenPage) match {
       case (clusterPageHash, resultPage) =>
-        tokenContent = tokenContent + "<br/>" + clusterPageHash
+        tokens+= title->clusterPageHash
         expectedTitles += title
         resultPage
     }
@@ -24,7 +25,8 @@ class ClusterGroupHierarchy(project: String, page: Page, tokenPage: RemotePage){
   def createWithToken(title: String, content: String, parent: RemotePage): RemotePage ={
     Confluence.confluenceCreatePage(project, title, content, page, parent, tokenPage) match {
       case (clusterPageHash, resultPage) =>
-        tokenContent = tokenContent + "<br/>" + clusterPageHash
+        tokens+= title->clusterPageHash
+        expectedTitles += title
         expectedTitles += title
         resultPage
     }
@@ -37,6 +39,7 @@ class ClusterGroupHierarchy(project: String, page: Page, tokenPage: RemotePage){
 
   def updateToken(){
     val newTokenPage = page.read(tokenPage.getId)
+    val tokenContent = tokens.toList.sortBy(_._1).map(_._2).mkString("<br/>")
     newTokenPage.setContent(tokenContent)
     page.update(newTokenPage, false)
     log.info(s"TOKEN page updated!")
@@ -90,8 +93,7 @@ object ClusterGroupHierarchy {
 
 
     //Per ClusterInfo - create page
-    for (clusterInfo <- allClusters.clusterInfoList)
-      {
+    allClusters.clusterInfoList.foreach { clusterInfo =>
         log.info(s"Creating pages for ${clusterInfo.cluster_name} within $project")
         //create the specific summary cluster page
         val clusterPageName = ConfluenceNaming.createName(clusterInfo)
@@ -105,8 +107,7 @@ object ClusterGroupHierarchy {
         hierarchy.createTokenless(clusterMetricsPageName, clusterMetricsContent, clusterParentPage)
 
         // Per keyspace create pages
-        for (keyspace <- clusterInfo.keyspaces)
-          {
+        clusterInfo.keyspaces.par.foreach { keyspace =>
             log.info(s"Creating pages for ${keyspace.keyspace_name} within $project")
             val keyspaceContent = KeyspacePage.generateKeyspacePage(project, keyspace, clusterInfo)
             val keyspacePageName = ConfluenceNaming.createName(clusterInfo, keyspace)

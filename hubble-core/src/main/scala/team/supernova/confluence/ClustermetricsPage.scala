@@ -1,7 +1,7 @@
 package team.supernova.confluence
 
 import org.slf4j.LoggerFactory
-import team.supernova.ClusterInfo
+import team.supernova.results.ClusterInfo
 
 import scala.xml.NodeSeq
 

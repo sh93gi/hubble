@@ -2,6 +2,7 @@ package team.supernova
 
 import org.scalatest.{FunSpecLike, Matchers}
 import team.supernova.cassandra.ClusterEnv
+import team.supernova.results.ClusterInfo
 
 import scala.collection.SortedSet
 

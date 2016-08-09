@@ -5,8 +5,8 @@ import java.util.Calendar
 import org.slf4j.LoggerFactory
 import team.supernova.confluence.soap.rpc.soap.actions.{Page, Token}
 import team.supernova.confluence.soap.rpc.soap.beans.RemotePage
+import team.supernova.results.{ClusterInfo, Keyspace}
 import team.supernova.validation.{Check, Severity}
-import team.supernova.{ClusterInfo, Keyspace}
 
 import scala.collection.SortedSet
 import scala.util.{Failure, Success, Try}
@@ -32,7 +32,7 @@ object ClusterOverallPage {
             <tbody>
               <tr>
                 <th>Cluster Group Name</th> <th>Total Errors</th> <th>Total Warnings</th> <th>Extras</th> <th>Last Checked</th>
-              </tr>{clusterMap.flatMap {
+              </tr>{clusterMap.toList.sortBy(_._1).flatMap {
               case (groupName, clusterInfoSet) =>
                 val failedChecks = clusterInfoSet.flatMap(_.checks).filterNot(_.hasPassed)
                 val errors = failedChecks.filter(_.severity==Severity.ERROR)
@@ -70,7 +70,7 @@ object ClusterOverallPage {
             <tbody>
               <tr>
                 <th>Cluster Group Name</th> <th>Cluster Name</th><th>Total Keyspaces</th><th>Total Tables</th> <th>Total Errors</th> <th>Total Warnings</th> <th>Extras</th> <th>Last Checked</th>
-              </tr>{clusterMap.flatMap {
+              </tr>{clusterMap.toList.sortBy(_._1).flatMap {
               case (groupName, clusterInfoSet) =>
                 val sortedClusterInfoSet = SortedSet[ClusterInfo]() ++ clusterInfoSet
                 sortedClusterInfoSet.flatMap { clusterInfo =>

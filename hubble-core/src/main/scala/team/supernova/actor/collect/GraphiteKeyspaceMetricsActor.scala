@@ -15,7 +15,7 @@ class GraphiteKeyspaceMetricsActor(requester: ActorRef)  extends Actor with Acto
 
   def process(cluster: ClusterEnv, keyspaces: List[String]): Map[String, List[MetricResult]] = {
     keyspaces.map(keyspace => keyspace -> keyspace)
-      .toMap.mapValues(keyspace => {
+      .toMap.par.mapValues(keyspace => {
       try {
         val graphiteParamsMap = cluster.graphite.map(Map()+ (("keyspace", keyspace)) + (("cluster", cluster.cluster_name))++_)
         AuthorizedGraphiteReader.retrieveAll(
@@ -28,7 +28,7 @@ class GraphiteKeyspaceMetricsActor(requester: ActorRef)  extends Actor with Acto
           log.warning(e.getMessage)
           List()
       }
-    })
+    }).toList.toMap
   }
 
   override def receive: Receive = {
