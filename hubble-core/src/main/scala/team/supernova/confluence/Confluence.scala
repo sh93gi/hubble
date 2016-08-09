@@ -78,6 +78,9 @@ object Confluence {
       pageObject.read(project, pageName)
     }
     catch {
+      case e: java.util.ConcurrentModificationException =>
+        log.warn(s"Failed to update $pageName because of ${e.getMessage}. Will retry it.", e)
+        confluenceCreateTokenLessPage(project, pageName, content, pageObject, parentPage, notify)
       case e: Exception =>
         log.info(s"Failed to update $pageName because of ${e.getMessage}. Will create it.")
         val newPage: RemotePage = new RemotePage
